@@ -71,7 +71,7 @@ export async function getAvailableSlots(
       // Count bookings that overlap with this slot
       // A booking overlaps if:
       // - booking.startTime < slotEnd AND booking.endTime > slotStart
-      const overlappingBookings = bookings.filter((booking) => {
+      const overlappingBookings = bookings.filter((booking: { startTime: Date; endTime: Date }) => {
         const bookingStart = new Date(booking.startTime);
         const bookingEnd = new Date(booking.endTime);
         return bookingStart < slotEnd && bookingEnd > slotStart;
@@ -125,7 +125,7 @@ export async function bookSlot(
     endTime.setMinutes(endTime.getMinutes() + SLOT_DURATION_MINUTES);
 
     // Use a transaction to ensure atomicity
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
       // 1. Check if user already has a booking at this time
       const existingUserBooking = await tx.booking.findFirst({
         where: {
