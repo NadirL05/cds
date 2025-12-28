@@ -1,50 +1,51 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { stripe } from "@/lib/stripe";
-import { getTestUserId } from "@/lib/constants";
+import { stripe, getOrCreateStripeCustomer } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 
-// ⚠️ IMPORTANT : Si tu as Auth.js, remplace getTestUserId par la vraie session !
-// import { auth } from "@/auth";
+// Price ID mapping
+const PRICE_IDS = {
+  DIGITAL: "price_1SdvdGR10ndhFPOHdMv6q2SI",
+  ZAPOY: "price_1SdvbIR10ndhFPOH3VV4dDou",
+  COACHING: "price_1SjQPwR10ndhFPOHxE9kkWsS",
+} as const;
+
+type PlanName = keyof typeof PRICE_IDS;
 
 export async function createCheckoutSession(planName: string) {
-  console.log("🛒 Starting checkout for plan:", planName);
-
-  // 1. Récupération de l'utilisateur
-  // Si tu utilises NextAuth, décommente les lignes suivantes :
-  // const session = await auth();
-  // const userId = session?.user?.id;
-
-  // SINON (Mode Test avec Seed) :
-  const userId = await getTestUserId();
-
-  if (!userId) {
-    console.error("❌ No user ID found! Cannot create checkout session.");
-    throw new Error("You must be logged in to subscribe.");
-  }
-
-  console.log("👤 User ID identified:", userId);
-
-  // 2. Sélection du Prix Stripe
-  let priceId;
-  switch (planName) {
-    case "DIGITAL":
-      priceId = "price_1SdvdGR10ndhFPOHdMv6q2SI";
-      break;
-    case "ZAPOY":
-      priceId = "price_1SdvbIR10ndhFPOH3VV4dDou";
-      break;
-    case "COACHING":
-      priceId = "price_1SjQPwR10ndhFPOHxE9kkWsS";
-      break;
-    default:
-      console.error("❌ Invalid plan name:", planName);
-      throw new Error("Invalid plan selected");
-  }
-
-  // 3. Création de la Session Stripe avec METADATA
   try {
+    // Validate plan name
+    if (!(planName in PRICE_IDS)) {
+      throw new Error(`Invalid plan name: ${planName}`);
+    }
+
+    const priceId = PRICE_IDS[planName as PlanName];
+
+    // Get authenticated user (redirects to signin if not logged in)
+    const userId = await getUserIdOrRedirect();
+
+    // Get user data including email
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, stripeCustomerId: true },
+    });
+
+    if (!user?.email) {
+      redirect("/auth/signin");
+    }
+
+    // Get or create Stripe customer
+    const customerId = await getOrCreateStripeCustomer(userId, user.email);
+
+    // Get base URL
+    const baseUrl = process.env.NEXT_PUBLIC_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+    // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "subscription",
       payment_method_types: ["card"],
       line_items: [
         {
@@ -52,24 +53,22 @@ export async function createCheckoutSession(planName: string) {
           quantity: 1,
         },
       ],
-      mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_URL}/member?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/?canceled=true`,
-      // 👇 C'EST ICI QUE TOUT SE JOUE 👇
+      success_url: `${baseUrl}/member?success=true`,
+      cancel_url: `${baseUrl}/?canceled=true`,
       metadata: {
-        userId: userId, // Indispensable pour le Webhook
-        plan: planName, // Indispensable pour le Webhook
+        userId: userId,
+        plan: planName,
       },
     });
 
-    console.log("✅ Stripe Session created:", session.id);
-
-    if (session.url) {
-      redirect(session.url);
+    if (!session.url) {
+      throw new Error("Failed to create checkout session");
     }
+
+    // Redirect to Stripe Checkout
+    redirect(session.url);
   } catch (error) {
-    console.error("❌ Stripe Error:", error);
-    // On ne re-throw pas l'erreur pour éviter de crasher toute la page,
-    // mais idéalement on devrait gérer l'erreur UI ici.
+    console.error("Error creating checkout session:", error);
+    throw error;
   }
 }
