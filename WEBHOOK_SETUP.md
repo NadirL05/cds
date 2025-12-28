@@ -26,8 +26,13 @@ STRIPE_WEBHOOK_SECRET="whsec_..."
 1. Allez dans Stripe Dashboard > Developers > Webhooks
 2. Créez un endpoint pointant vers `https://votre-domaine.com/api/webhooks/stripe`
 3. Sélectionnez l'événement : `checkout.session.completed`
-4. Copiez le "Signing secret" (commence par `whsec_`)
-5. Ajoutez-le dans Vercel : Settings > Environment Variables > `STRIPE_WEBHOOK_SECRET`
+4. **Important** : Cliquez sur l'endpoint créé, puis sur "Signing secret" > "Reveal"
+5. Copiez le **"Signing secret"** (commence par `whsec_` - **PAS** `we_` qui est l'endpoint ID)
+6. Ajoutez-le dans Vercel : Settings > Environment Variables > `STRIPE_WEBHOOK_SECRET`
+
+**Note** : Ne confondez pas :
+- **Endpoint ID** : commence par `we_` (ne sert pas pour la vérification de signature)
+- **Signing secret** : commence par `whsec_` (nécessaire pour `constructEvent()`)
 
 ## Événements gérés
 
