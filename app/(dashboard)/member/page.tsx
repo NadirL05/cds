@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { MemberDashboardClient } from "./member-dashboard-client";
+import { PaymentStatusHandler } from "@/components/payment-status";
+import { Suspense } from "react";
 
 export default async function MemberDashboardPage() {
   // Get authenticated user
@@ -32,11 +34,16 @@ export default async function MemberDashboardPage() {
   }
 
   return (
-    <MemberDashboardClient
-      userName={`${user.profile.firstName} ${user.profile.lastName}`}
-      studioId={studio.id}
-      studioName={studio.name}
-      userId={userId}
-    />
+    <>
+      <Suspense fallback={null}>
+        <PaymentStatusHandler />
+      </Suspense>
+      <MemberDashboardClient
+        userName={`${user.profile.firstName} ${user.profile.lastName}`}
+        studioId={studio.id}
+        studioName={studio.name}
+        userId={userId}
+      />
+    </>
   );
 }

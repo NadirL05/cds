@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import Link from "next/link";
+import { PaymentStatusHandler } from "@/components/payment-status";
+import { Suspense } from "react";
 
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <Suspense fallback={null}>
+        <PaymentStatusHandler />
+      </Suspense>
       {/* Header */}
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between px-4">
