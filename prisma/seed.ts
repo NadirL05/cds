@@ -1,8 +1,11 @@
 import "dotenv/config";
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, $Enums } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { startOfDay, addDays, setHours, setMinutes, addMinutes } from "date-fns";
+
+type Role = $Enums.Role;
+const Role = $Enums.Role;
 
 const connectionString = process.env.DATABASE_URL!;
 const pool = new Pool({ connectionString });

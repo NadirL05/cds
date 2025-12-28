@@ -1,0 +1,42 @@
+import { prisma } from "@/lib/prisma";
+import { getTestUserId } from "@/lib/constants";
+import { MemberDashboardClient } from "./member-dashboard-client";
+
+export default async function MemberDashboardPage() {
+  // Get test user and profile
+  const userId = await getTestUserId();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { profile: true },
+  });
+
+  // Get the first studio (or user's home studio)
+  const studio = await prisma.studio.findFirst({
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (!user || !user.profile) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Utilisateur non trouvé</p>
+      </div>
+    );
+  }
+
+  if (!studio) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Aucun studio trouvé</p>
+      </div>
+    );
+  }
+
+  return (
+    <MemberDashboardClient
+      userName={`${user.profile.firstName} ${user.profile.lastName}`}
+      studioId={studio.id}
+      studioName={studio.name}
+      userId={userId}
+    />
+  );
+}
