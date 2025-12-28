@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN      // The Master Franchise Owner
+  FRANCHISE_OWNER  // The Studio Manager
+  COACH            // Employees
+  MEMBER           // End Users
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  role          Role      @default(MEMBER)
+  homeStudioId  String?   // Link to their main studio
+  homeStudio    Studio?   @relation(fields: [homeStudioId], references: [id])
+  profile       Profile?
+  bookings      Booking[]
+  createdAt     DateTime  @default(now())
+}
+
+model Profile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  // Smart Matching Fields (Algorithm data)
+  goals         String[]  // e.g. ["Weight Loss", "Muscle", "Back Pain"]
+  medicalNotes  String?   // Critical for EMS safety (contraindications)
+  level         String?   // Beginner, Intermediate, etc.
+}
+
+model Studio {
+  id                 String    @id @default(uuid())
+  name               String
+  city               String    // Targeting cities > 100k hab
+  maxCapacityPerSlot Int       @default(6) // SPORTEC CONSTRAINT: 6 users max per slot
+  members            User[]
+  bookings           Booking[]
+  createdAt          DateTime  @default(now())
+}
+
+model Booking {
+  id           String   @id @default(uuid())
+  studioId     String
+  studio       Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startTime    DateTime
+  endTime      DateTime
+  status       String   @default("CONFIRMED") // CONFIRMED, CANCELLED, NO_SHOW
+  
+  // Sportec Specific Data
+  programUsed  String?  // e.g. "Metabolique", "Massage", "Force 2"
+  intensityLog Json?    // To save machine levels for progress tracking
+}
