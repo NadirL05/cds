@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { getTestUserId } from "@/lib/constants";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { getUserBookings } from "@/app/actions/member-actions";
 import { MyBookingsClient } from "./my-bookings-client";
 
 export default async function MyBookingsPage() {
-  const userId = await getTestUserId();
+  const userId = await getUserIdOrRedirect();
   const bookings = await getUserBookings(userId);
 
   // Split bookings into upcoming and history

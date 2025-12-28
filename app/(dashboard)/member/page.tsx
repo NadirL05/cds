@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { getTestUserId } from "@/lib/constants";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { MemberDashboardClient } from "./member-dashboard-client";
 
 export default async function MemberDashboardPage() {
-  // Get test user and profile
-  const userId = await getTestUserId();
+  // Get authenticated user
+  const userId = await getUserIdOrRedirect();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { profile: true },

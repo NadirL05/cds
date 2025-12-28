@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Menu, User } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserMenu } from "@/components/user-menu";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -63,7 +63,7 @@ export default function DashboardLayout({
             <span className="text-xl font-bold text-primary">CDS Sport</span>
           </Link>
 
-          {/* Desktop Navigation + User Avatar */}
+          {/* Desktop Navigation + User Menu */}
           <div className="hidden md:flex md:items-center md:space-x-6">
             <nav className="flex items-center space-x-6">
               {navigation.map((item) => (
@@ -76,11 +76,7 @@ export default function DashboardLayout({
                 </Link>
               ))}
             </nav>
-            <Avatar className="h-8 w-8 border-2 border-slate-300">
-              <AvatarFallback className="bg-slate-100 text-slate-700">
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
+            <UserMenu />
           </div>
         </div>
       </header>

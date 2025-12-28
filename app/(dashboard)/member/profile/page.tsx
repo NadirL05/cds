@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { getTestUserId } from "@/lib/constants";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { ProfileFormClient } from "./profile-form-client";
 
 export default async function ProfilePage() {
-  const userId = await getTestUserId();
+  const userId = await getUserIdOrRedirect();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
