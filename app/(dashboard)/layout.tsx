@@ -8,6 +8,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
 import { cn } from "@/lib/utils";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 const navigation = [
   { name: "Dashboard", href: "/member" },
@@ -15,11 +18,27 @@ const navigation = [
   { name: "Profile", href: "/member/profile" },
 ];
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Get authenticated user
+  const userId = await getUserIdOrRedirect();
+
+  // Check subscription status
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { subscriptionStatus: true },
+  });
+
+  // If user doesn't have an active subscription, redirect to subscribe page
+  // Exception: allow access to /member/profile so users can see their profile
+  // (We'll check the path in the client-side or make profile accessible)
+  if (user?.subscriptionStatus !== "active") {
+    redirect("/subscribe");
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
