@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Teko, Permanent_Marker, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Russo_One, Permanent_Marker, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/components/providers/session-provider";
 import "./globals.css";
@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const teko = Teko({
-  variable: "--font-teko",
+const russoOne = Russo_One({
+  variable: "--font-russo-one",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400"],
 });
 
 const permanentMarker = Permanent_Marker({
@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${teko.variable} ${permanentMarker.variable} ${inter.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} ${permanentMarker.variable} ${inter.variable} antialiased`}
       >
         <SessionProvider>
           {children}

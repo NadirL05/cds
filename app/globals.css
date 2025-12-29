@@ -8,7 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-teko: var(--font-teko);
+  --font-russo-one: var(--font-russo-one);
   --font-marker: var(--font-marker);
   --font-inter: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -145,9 +145,7 @@
     z-index: 0;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-teko), sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-family: var(--font-russo-one), sans-serif;
   }
   body {
     font-family: var(--font-inter), sans-serif;
@@ -156,9 +154,7 @@
 
 @layer utilities {
   .font-heading {
-    font-family: var(--font-teko), sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-family: var(--font-russo-one), sans-serif;
   }
   .font-marker {
     font-family: var(--font-marker), cursive;
@@ -166,23 +162,23 @@
     display: inline-block;
   }
   .neon-orange {
-    color: #f97316;
-    filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.5));
+    color: #ff5500;
+    filter: drop-shadow(0 0 8px rgba(255, 85, 0, 0.5));
   }
   .neon-orange-hover:hover {
-    filter: drop-shadow(0 0 16px rgba(249, 115, 22, 0.8));
+    filter: drop-shadow(0 0 16px rgba(255, 85, 0, 0.8));
     transition: filter 0.3s ease;
   }
   .button-skew {
-    transform: skewX(-12deg);
+    transform: skewX(-6deg);
   }
   .button-skew-inner {
-    transform: skewX(12deg);
+    transform: skewX(6deg);
   }
   .glass-card {
-    background: rgba(9, 9, 11, 0.6);
+    background: rgba(24, 24, 27, 0.8);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(39, 39, 42, 1);
   }
   .glass-footer {
     background: rgba(255, 255, 255, 0.02);
