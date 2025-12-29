@@ -43,6 +43,7 @@ export default async function MemberDashboardPage() {
         studioId={studio.id}
         studioName={studio.name}
         userId={userId}
+        userPlan={user.plan}
       />
     </>
   );

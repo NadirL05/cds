@@ -120,6 +120,19 @@ export async function bookSlot(
       };
     }
 
+    // Check user plan - DIGITAL users cannot book studio slots
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+
+    if (user?.plan === "DIGITAL") {
+      return {
+        success: false,
+        error: "Upgrade your plan to ZAPOY or COACHING to book studio sessions.",
+      };
+    }
+
     // Calculate end time (20 minutes after start)
     const endTime = new Date(startTime);
     endTime.setMinutes(endTime.getMinutes() + SLOT_DURATION_MINUTES);
