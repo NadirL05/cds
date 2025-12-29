@@ -13,155 +13,166 @@ export default function LandingPage() {
         <PaymentStatusHandler />
       </Suspense>
       {/* Header */}
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between px-4">
+      <header className="border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center space-x-2">
             <span className="text-xl font-bold text-primary">CDS Sport</span>
           </div>
           <nav className="flex items-center space-x-4">
             <Link href="/auth/signin">
-              <Button variant="ghost">Se connecter</Button>
+              <Button variant="ghost" className="text-white hover:text-orange-600">Se connecter</Button>
             </Link>
             <Link href="/auth/signup">
-              <Button>Créer un compte</Button>
+              <Button className="bg-orange-600 hover:bg-orange-700 text-white">Créer un compte</Button>
             </Link>
           </nav>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container flex flex-col items-center justify-center py-24 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-          Transformez votre corps avec
+      <section className="max-w-7xl mx-auto w-full flex flex-col items-center justify-center py-24 text-center px-4">
+        <h1 className="font-heading text-6xl sm:text-7xl md:text-8xl font-bold text-white leading-none" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.7)' }}>
+          TRANSFORMEZ
           <br />
-          <span className="text-primary">l'entraînement EMS</span>
+          <span className="neon-orange neon-orange-hover">VOTRE CORPS</span>
+          <br />
+          AVEC L'<span className="font-marker neon-orange">EMS</span>
         </h1>
-        <p className="mt-6 text-lg leading-8 text-slate-600 max-w-2xl">
+        <p className="mt-8 text-lg sm:text-xl leading-8 text-slate-300 max-w-2xl">
           Choisissez le plan qui correspond à vos objectifs. Accès immédiat à nos programmes
           d'entraînement EMS personnalisés.
         </p>
       </section>
 
       {/* Pricing Section */}
-      <section className="container py-24">
+      <section className="max-w-7xl mx-auto w-full py-24 px-4">
         <div className="grid gap-8 md:grid-cols-3">
           {/* DIGITAL Plan */}
-          <Card className="relative">
-            <CardHeader>
-              <CardTitle>DIGITAL</CardTitle>
-              <CardDescription>Accès aux programmes en ligne</CardDescription>
-              <div className="mt-4">
-                <span className="text-3xl font-bold">29€</span>
-                <span className="text-muted-foreground">/mois</span>
+          <Card className="relative glass-card border-white/10 hover:border-white/20 transition-colors p-8">
+            <CardHeader className="pb-6">
+              <CardTitle className="font-heading text-white text-3xl">DIGITAL</CardTitle>
+              <CardDescription className="text-slate-400 mt-2">Accès aux programmes en ligne</CardDescription>
+              <div className="mt-6">
+                <span className="font-heading text-5xl font-bold text-white">29€</span>
+                <span className="text-slate-400 ml-2">/mois</span>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-slate-300 pb-8">
               <ul className="space-y-3">
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
+                  <Check className="h-5 w-5 text-orange-500" />
                   <span>Programmes d'entraînement digitaux</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
+                  <Check className="h-5 w-5 text-orange-500" />
                   <span>Suivi de progression</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
+                  <Check className="h-5 w-5 text-orange-500" />
                   <span>Accès mobile</span>
                 </li>
               </ul>
               <form action={createCheckoutSession.bind(null, "DIGITAL")} className="mt-6">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700 text-white">
                   S'abonner
                 </Button>
               </form>
             </CardContent>
+            <div className="glass-footer p-6 border-t border-white/10">
+              <p className="text-xs text-slate-500 text-center">Accès illimité</p>
+            </div>
           </Card>
 
           {/* ZAPOY Plan */}
-          <Card className="relative border-primary">
+          <Card className="relative glass-card border-2 border-orange-500/50 hover:border-orange-500 transition-colors p-8">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+              <span className="font-marker rounded-full bg-orange-500 px-4 py-1 text-sm text-white neon-orange-hover">
                 Populaire
               </span>
             </div>
-            <CardHeader>
-              <CardTitle>ZAPOY</CardTitle>
-              <CardDescription>Plan complet avec coaching</CardDescription>
-              <div className="mt-4">
-                <span className="text-3xl font-bold">59€</span>
-                <span className="text-muted-foreground">/mois</span>
+            <CardHeader className="pb-6">
+              <CardTitle className="font-heading text-white text-3xl">ZAPOY</CardTitle>
+              <CardDescription className="text-slate-400 mt-2">Plan complet avec coaching</CardDescription>
+              <div className="mt-6">
+                <span className="font-heading text-5xl font-bold text-white">69€</span>
+                <span className="text-slate-400 ml-2">/mois</span>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-slate-300 pb-8">
               <ul className="space-y-3">
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
+                  <Check className="h-5 w-5 text-orange-500" />
                   <span>Tout de DIGITAL</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>Coaching personnalisé</span>
+                  <Check className="h-5 w-5 text-orange-500" />
+                  <span>Accès illimité au studio</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>Support prioritaire</span>
+                  <Check className="h-5 w-5 text-orange-500" />
+                  <span>Réservation de créneaux</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>Accès aux événements</span>
+                  <Check className="h-5 w-5 text-orange-500" />
+                  <span>Équipement Sportec EMS</span>
                 </li>
               </ul>
               <form action={createCheckoutSession.bind(null, "ZAPOY")} className="mt-6">
-                <Button type="submit" className="w-full">
-                  S'abonner
+                <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white button-skew font-heading text-lg py-6 neon-orange-hover">
+                  <span className="button-skew-inner">S'ABONNER</span>
                 </Button>
               </form>
             </CardContent>
+            <div className="glass-footer p-6 border-t border-white/10">
+              <p className="text-xs text-slate-500 text-center">Plan le plus populaire</p>
+            </div>
           </Card>
 
           {/* COACHING Plan */}
-          <Card className="relative">
-            <CardHeader>
-              <CardTitle>COACHING</CardTitle>
-              <CardDescription>Coaching intensif et premium</CardDescription>
-              <div className="mt-4">
-                <span className="text-3xl font-bold">99€</span>
-                <span className="text-muted-foreground">/mois</span>
+          <Card className="relative glass-card border-white/10 hover:border-white/20 transition-colors p-8">
+            <CardHeader className="pb-6">
+              <CardTitle className="font-heading text-white text-3xl">COACHING</CardTitle>
+              <CardDescription className="text-slate-400 mt-2">Coaching intensif et premium</CardDescription>
+              <div className="mt-6">
+                <span className="font-heading text-5xl font-bold text-white">99€</span>
+                <span className="text-slate-400 ml-2">/mois</span>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-slate-300 pb-8">
               <ul className="space-y-3">
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
+                  <Check className="h-5 w-5 text-orange-500" />
                   <span>Tout de ZAPOY</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>Sessions individuelles</span>
+                  <Check className="h-5 w-5 text-orange-500" />
+                  <span>Accompagnement personnalisé</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>Plan nutritionnel personnalisé</span>
+                  <Check className="h-5 w-5 text-orange-500" />
+                  <span>Plan d'entraînement sur mesure</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-primary" />
-                  <span>Support 24/7</span>
+                  <Check className="h-5 w-5 text-orange-500" />
+                  <span>Suivi nutritionnel</span>
                 </li>
               </ul>
               <form action={createCheckoutSession.bind(null, "COACHING")} className="mt-6">
-                <Button type="submit" className="w-full">
-                  S'abonner
+                <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white button-skew font-heading text-lg py-6 neon-orange-hover">
+                  <span className="button-skew-inner">S'ABONNER</span>
                 </Button>
               </form>
             </CardContent>
+            <div className="glass-footer p-6 border-t border-white/10">
+              <p className="text-xs text-slate-500 text-center">Premium exclusif</p>
+            </div>
           </Card>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12">
-        <div className="container text-center text-sm text-muted-foreground">
+      <footer className="border-t border-slate-800 py-12">
+        <div className="max-w-7xl mx-auto text-center text-sm text-slate-400 px-4">
           <p>© 2024 CDS Sport. Tous droits réservés.</p>
         </div>
       </footer>
