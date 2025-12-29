@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cancelBooking } from "@/app/actions/member-actions";
+import { cancelBooking } from "@/app/actions/booking-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ export function MyBookingsClient({
     }
 
     try {
-      const result = await cancelBooking(bookingId, userId);
+      const result = await cancelBooking(bookingId);
       if (result.success) {
         toast.success("Booking cancelled successfully");
         router.refresh();

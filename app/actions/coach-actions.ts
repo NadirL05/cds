@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 
 export interface CoachBooking {
   id: string;
@@ -94,6 +95,73 @@ export async function getCoachSchedule(
     }));
   } catch (error) {
     console.error("Error fetching coach schedule:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get daily schedule for coaches
+ * Security: Only COACH, FRANCHISE_OWNER, or SUPER_ADMIN can access
+ */
+export async function getDailySchedule(date: Date) {
+  try {
+    // Get current user ID
+    const userId = await getUserIdOrRedirect();
+
+    // Check user role
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user || (user.role !== "COACH" && user.role !== "FRANCHISE_OWNER" && user.role !== "SUPER_ADMIN")) {
+      throw new Error("Unauthorized");
+    }
+
+    // Normalize date to start of day
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Fetch bookings for the specified date
+    const bookings = await prisma.booking.findMany({
+      where: {
+        startTime: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: "asc",
+      },
+    });
+
+    // Map and return bookings with user information
+    return bookings.map((booking) => ({
+      id: booking.id,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      status: booking.status,
+      programUsed: booking.programUsed,
+      user: {
+        id: booking.user.id,
+        email: booking.user.email,
+        firstName: booking.user.profile?.firstName || "N/A",
+        lastName: booking.user.profile?.lastName || "N/A",
+        plan: booking.user.plan,
+      },
+    }));
+  } catch (error) {
+    console.error("Error fetching daily schedule:", error);
     throw error;
   }
 }

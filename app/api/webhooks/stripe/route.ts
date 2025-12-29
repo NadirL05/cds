@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, getStripeWebhookSecret } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { resend } from "@/lib/resend";
+import { WelcomeEmail } from "@/components/emails/welcome-email";
+import { render } from "@react-email/render";
 import Stripe from "stripe";
+import React from "react";
 
 // Disable body parsing, we need the raw body for signature verification
 export const runtime = "nodejs";
@@ -59,16 +63,49 @@ export async function POST(request: NextRequest) {
 
       try {
         // Update user in database
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
           where: { id: userId },
           data: {
             stripeCustomerId: customerId,
             plan: plan,
             subscriptionStatus: "active",
           },
+          include: {
+            profile: true,
+          },
         });
 
         console.log(`✅ Subscription activated for user ${userId} with plan ${plan}`);
+
+        // Send welcome email
+        try {
+          const userEmail = session.customer_details?.email || updatedUser.email;
+          const firstName = updatedUser.profile?.firstName;
+
+          if (userEmail) {
+            // Render the React email component to HTML
+            const emailHtml = await render(
+              React.createElement(WelcomeEmail, {
+                firstName: firstName || undefined,
+                planName: plan,
+              }) as React.ReactElement
+            );
+
+            await resend.emails.send({
+              from: "onboarding@resend.dev",
+              to: userEmail,
+              subject: "Bienvenue chez CDS Sport !",
+              html: emailHtml,
+            });
+
+            console.log(`✅ Welcome email sent to ${userEmail}`);
+          } else {
+            console.warn("⚠️ No email found to send welcome email");
+          }
+        } catch (emailError) {
+          // Log error but don't fail the webhook
+          console.error("Error sending welcome email:", emailError);
+        }
       } catch (dbError) {
         console.error("Error updating user subscription:", dbError);
         return NextResponse.json(

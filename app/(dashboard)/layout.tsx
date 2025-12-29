@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, Shield, CalendarDays, LucideIcon } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -7,16 +7,16 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
-import { cn } from "@/lib/utils";
 import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { SidebarNav } from "./sidebar-nav";
 
-const navigation = [
-  { name: "Dashboard", href: "/member" },
-  { name: "My Bookings", href: "/member/bookings" },
-  { name: "Profile", href: "/member/profile" },
-];
+type NavigationItem = {
+  name: string;
+  href: string;
+  icon?: LucideIcon;
+};
 
 export default async function DashboardLayout({
   children,
@@ -26,10 +26,10 @@ export default async function DashboardLayout({
   // Get authenticated user
   const userId = await getUserIdOrRedirect();
 
-  // Check subscription status
+  // Check subscription status and role
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { subscriptionStatus: true },
+    select: { subscriptionStatus: true, role: true },
   });
 
   // If user doesn't have an active subscription, redirect to subscribe page
@@ -37,6 +37,31 @@ export default async function DashboardLayout({
   // (We'll check the path in the client-side or make profile accessible)
   if (user?.subscriptionStatus !== "active") {
     redirect("/subscribe");
+  }
+
+  // Create dynamic navigation array
+  const navigation: NavigationItem[] = [
+    { name: "Dashboard", href: "/member" },
+    { name: "My Bookings", href: "/member/bookings" },
+    { name: "Profile", href: "/member/profile" },
+  ];
+
+  // Add Coach link if user is COACH, FRANCHISE_OWNER or SUPER_ADMIN
+  if (user?.role === "COACH" || user?.role === "FRANCHISE_OWNER" || user?.role === "SUPER_ADMIN") {
+    navigation.push({
+      name: "Espace Coach",
+      href: "/coach",
+      icon: CalendarDays,
+    });
+  }
+
+  // Add Admin link if user is FRANCHISE_OWNER or SUPER_ADMIN
+  if (user?.role === "FRANCHISE_OWNER" || user?.role === "SUPER_ADMIN") {
+    navigation.push({
+      name: "Admin Espace",
+      href: "/admin/members",
+      icon: Shield,
+    });
   }
 
   return (
@@ -53,7 +78,7 @@ export default async function DashboardLayout({
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </DrawerTrigger>
-              <DrawerContent className="w-[300px] max-w-[85vw]">
+              <DrawerContent className="w-[300px] max-w-[85vw] bg-sidebar text-sidebar-foreground">
                 <div className="flex flex-col p-4">
                   <Link
                     href="/member"
@@ -61,17 +86,7 @@ export default async function DashboardLayout({
                   >
                     CDS Sport
                   </Link>
-                  <nav className="flex flex-col space-y-2">
-                    {navigation.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="rounded-lg px-4 py-2 text-sm font-medium hover:bg-accent"
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
-                  </nav>
+                  <SidebarNav navigation={navigation} />
                 </div>
               </DrawerContent>
             </Drawer>
@@ -85,15 +100,19 @@ export default async function DashboardLayout({
           {/* Desktop Navigation + User Menu */}
           <div className="hidden md:flex md:items-center md:space-x-6">
             <nav className="flex items-center space-x-6">
-              {navigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                >
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary"
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {item.name}
+                  </Link>
+                );
+              })}
             </nav>
             <UserMenu />
           </div>
@@ -103,21 +122,9 @@ export default async function DashboardLayout({
       {/* Main Content Area */}
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-64 border-r bg-card md:block">
+        <aside className="hidden w-64 border-r bg-sidebar md:block">
           <div className="flex h-full flex-col p-6">
-            <nav className="space-y-2">
-              {navigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "block rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+            <SidebarNav navigation={navigation} />
           </div>
         </aside>
 

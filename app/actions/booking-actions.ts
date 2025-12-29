@@ -1,6 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
+import { revalidatePath } from "next/cache";
 
 // Slot duration in minutes
 const SLOT_DURATION_MINUTES = 20;
@@ -137,9 +139,34 @@ export async function bookSlot(
     const endTime = new Date(startTime);
     endTime.setMinutes(endTime.getMinutes() + SLOT_DURATION_MINUTES);
 
+    // Determine start and end of the day for the requested slot
+    const slotDate = new Date(startTime);
+    slotDate.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(slotDate);
+    const endOfDay = new Date(slotDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
     // Use a transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0]) => {
-      // 1. Check if user already has a booking at this time
+      // 1. Check if user already has a booking for this day (ONE BOOKING PER DAY LIMIT)
+      const existingBookingsCount = await tx.booking.count({
+        where: {
+          userId,
+          startTime: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+          status: {
+            in: ["CONFIRMED", "ATTENDED"],
+          },
+        },
+      });
+
+      if (existingBookingsCount > 0) {
+        throw new Error("You already have a session booked for this day. Please choose another date.");
+      }
+
+      // 2. Check if user already has a booking at this specific time (additional safety check)
       const existingUserBooking = await tx.booking.findFirst({
         where: {
           userId,
@@ -157,7 +184,7 @@ export async function bookSlot(
         throw new Error("User already has a booking at this time");
       }
 
-      // 2. Get studio to access maxCapacityPerSlot
+      // 3. Get studio to access maxCapacityPerSlot
       const studio = await tx.studio.findUnique({
         where: { id: studioId },
       });
@@ -166,7 +193,7 @@ export async function bookSlot(
         throw new Error("Studio not found");
       }
 
-      // 3. Count existing bookings for this slot
+      // 4. Count existing bookings for this slot
       const overlappingBookings = await tx.booking.count({
         where: {
           studioId,
@@ -180,12 +207,12 @@ export async function bookSlot(
         },
       });
 
-      // 4. Check capacity constraint (Sportec: max 6 per slot)
+      // 5. Check capacity constraint (Sportec: max 6 per slot)
       if (overlappingBookings >= studio.maxCapacityPerSlot) {
         throw new Error("Slot is full");
       }
 
-      // 5. Create the booking
+      // 6. Create the booking
       const booking = await tx.booking.create({
         data: {
           studioId,
@@ -206,6 +233,57 @@ export async function bookSlot(
     };
   } catch (error) {
     console.error("Error booking slot:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Cancel a booking by deleting it
+ * Security check: ensures booking belongs to current user
+ */
+export async function cancelBooking(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Get current user ID
+    const userId = await getUserIdOrRedirect();
+
+    // Security check: verify booking belongs to user
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: { userId: true },
+    });
+
+    if (!booking) {
+      return {
+        success: false,
+        error: "Booking not found",
+      };
+    }
+
+    if (booking.userId !== userId) {
+      return {
+        success: false,
+        error: "Unauthorized: This booking does not belong to you",
+      };
+    }
+
+    // Delete the booking record
+    await prisma.booking.delete({
+      where: { id: bookingId },
+    });
+
+    // Revalidate relevant paths
+    revalidatePath("/member/bookings");
+    revalidatePath("/member");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error cancelling booking:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return {
       success: false,

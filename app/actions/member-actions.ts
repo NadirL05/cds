@@ -79,7 +79,7 @@ export async function getUserBookings(
 }
 
 /**
- * Cancel a booking
+ * Cancel a booking by deleting it
  * Security check: ensures booking belongs to user
  */
 export async function cancelBooking(
@@ -107,14 +107,7 @@ export async function cancelBooking(
       };
     }
 
-    // Don't allow canceling already cancelled or attended bookings
-    if (booking.status === "CANCELLED") {
-      return {
-        success: false,
-        error: "This booking is already cancelled",
-      };
-    }
-
+    // Don't allow canceling already attended bookings
     if (booking.status === "ATTENDED") {
       return {
         success: false,
@@ -122,9 +115,9 @@ export async function cancelBooking(
       };
     }
 
-    await prisma.booking.update({
+    // Delete the booking record
+    await prisma.booking.delete({
       where: { id: bookingId },
-      data: { status: "CANCELLED" },
     });
 
     // Revalidate relevant paths

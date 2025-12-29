@@ -7,7 +7,7 @@ import { BookingSlots } from "@/components/booking/booking-slots";
 import { DateSelector } from "./date-selector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { PlanBadge } from "@/components/plan-badge";
 import { Smartphone } from "lucide-react";
 
 interface MemberDashboardClientProps {
@@ -33,12 +33,17 @@ export function MemberDashboardClient({
       <div className="space-y-6">
         {/* Welcome Message */}
         <div className="border-b border-slate-200 pb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Hello {userName.split(" ")[0]}
-          </h1>
-          <p className="text-slate-600 mt-2">
-            Welcome to your digital space
-          </p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                Hello {userName.split(" ")[0]}
+              </h1>
+              <p className="text-slate-600 mt-2">
+                Welcome to your digital space
+              </p>
+            </div>
+            {userPlan && <PlanBadge plan={userPlan} />}
+          </div>
         </div>
 
         {/* Digital Space Card */}
@@ -99,11 +104,7 @@ export function MemberDashboardClient({
               Book your EMS session at {studioName}
             </p>
           </div>
-          {planDisplayName && (
-            <Badge variant="secondary" className="text-sm px-3 py-1.5">
-              Current Plan: {planDisplayName}
-            </Badge>
-          )}
+          {userPlan && <PlanBadge plan={userPlan} />}
         </div>
       </div>
 
