@@ -61,7 +61,7 @@ export function PerformanceStats({ stats }: PerformanceStatsProps) {
               <div className="mt-3">
                 <Button
                   asChild
-                  size="xs"
+                  size="sm"
                   className="bg-[#ff5500] hover:bg-[#ff6600] text-white button-skew font-heading text-xs"
                 >
                   <Link href="/member/profile">
