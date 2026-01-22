@@ -14,7 +14,7 @@ import { redirect } from "next/navigation";
 
 const adminNavigation = [
   { name: "Members", href: "/admin/members" },
-  // Add more admin links here as needed
+  { name: "Outils & Tests", href: "/admin/tools" },
 ];
 
 export default async function AdminLayout({

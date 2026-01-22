@@ -3,90 +3,85 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
-}
-
-enum Role {
-  SUPER_ADMIN // The Master Franchise Owner
-  FRANCHISE_OWNER // The Studio Manager
-  COACH // Employees
-  MEMBER // End Users
+  provider   = "prisma-client-js"
+  engineType = "library"
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  role         Role      @default(MEMBER)
-  homeStudioId String? // Link to their main studio
-  homeStudio   Studio?   @relation(fields: [homeStudioId], references: [id])
-  profile      Profile?
-  bookings     Booking[]
-  createdAt    DateTime  @default(now())
-
-  // Authentication & Subscription
-  password           String? // For email/password auth
-  stripeCustomerId   String? @unique // Link to Stripe customer (unique)
-  subscriptionStatus String? // "active", "past_due", "canceled", "trialing"
-  plan               String? // "DIGITAL", "ZAPOY", "COACHING"
-
-  // NextAuth relations
-  accounts Account[]
-  sessions Session[]
+  id                   String               @id @default(uuid())
+  email                String               @unique
+  role                 Role                 @default(MEMBER)
+  homeStudioId         String?
+  createdAt            DateTime             @default(now())
+  password             String?
+  stripeCustomerId     String?
+  subscriptionStatus   String?
+  plan                 String?
+  accounts             Account[]
+  bookings             Booking[]
+  profile              Profile?
+  sessions             Session[]
+  homeStudio           Studio?              @relation(fields: [homeStudioId], references: [id])
+  coachingPreferences  CoachingPreferences?
+  subscription         Subscription?
 }
 
 model Profile {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  userId       String    @unique
   firstName    String
   lastName     String
-  // Smart Matching Fields (Algorithm data)
-  goals        String[] // e.g. ["Weight Loss", "Muscle", "Back Pain"]
-  medicalNotes String? // Critical for EMS safety (contraindications)
-  level        String? // Beginner, Intermediate, etc.
+  goals        String[]
+  medicalNotes String?
+  level        String?
+  height       Float?
+  weight       Float?
+  gender       String?
+  birthDate    DateTime?
+  age          Int?
+  city         String?
+  department   String?
+  phoneNumber  String?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Studio {
   id                 String    @id @default(uuid())
   name               String
-  city               String // Targeting cities > 100k hab
-  maxCapacityPerSlot Int       @default(6) // SPORTEC CONSTRAINT: 6 users max per slot
-  members            User[]
-  bookings           Booking[]
+  city               String
+  maxCapacityPerSlot Int       @default(6)
   createdAt          DateTime  @default(now())
+  bookings           Booking[]
+  members            User[]
 }
 
 model Booking {
-  id        String   @id @default(uuid())
-  studioId  String
-  studio    Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startTime DateTime
-  endTime   DateTime
-  status    String   @default("CONFIRMED") // CONFIRMED, CANCELLED, NO_SHOW
-
-  // Sportec Specific Data
-  programUsed  String? // e.g. "Metabolique", "Massage", "Force 2"
-  intensityLog Json? // To save machine levels for progress tracking
+  id           String   @id @default(uuid())
+  studioId     String
+  userId       String
+  startTime    DateTime
+  endTime      DateTime
+  status       String   @default("CONFIRMED")
+  programUsed  String?
+  intensityLog Json?
+  studio       Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// NextAuth Models
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -105,4 +100,81 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Role {
+  SUPER_ADMIN
+  FRANCHISE_OWNER
+  COACH
+  MEMBER
+}
+
+// AI Coaching Enums
+enum Goal {
+  RAFFERMIR
+  PRISE_MASSE
+  PERTE_POIDS
+  SE_MUSCLER
+}
+
+enum Level {
+  DEBUTANT
+  INTERMEDIAIRE
+  CONFIRME
+}
+
+enum Frequency {
+  UNE_DEUX
+  TROIS_QUATRE
+  CINQ_PLUS
+}
+
+// AI Coaching Preferences (One-to-One with User)
+model CoachingPreferences {
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Sport Fields
+  goal                Goal?
+  level               Level?
+  frequency           Frequency?
+  
+  // Diet Fields (Booleans)
+  eatsMeat            Boolean?
+  eatsFish            Boolean?
+  eatsEggs            Boolean?
+  
+  // Diet Fields (Arrays)
+  veggies             String[]  // List of preferred vegetables
+  starches            String[]  // List of preferred féculents
+  drinks              String[]  // List of preferred drinks
+  
+  // Free Text
+  dietaryRestrictions String?   // Allergies or specific notes
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+// Subscription tracking (One-to-One with User)
+model Subscription {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Stripe fields
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+  status               String?  // "active", "trialing", "past_due", "canceled"
+  
+  // Trial tracking
+  trialEndsAt          DateTime?
+  
+  // Billing cycle
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }

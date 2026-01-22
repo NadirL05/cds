@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { endOfWeek, startOfWeek } from "date-fns";
 
 export interface UserBooking {
   id: string;
@@ -21,6 +22,18 @@ export interface UpdateProfileData {
   lastName?: string;
   goals?: string[];
   medicalNotes?: string | null;
+  height?: number | null;
+  weight?: number | null;
+  gender?: string | null;
+  birthDate?: Date | null;
+}
+
+export interface MemberStats {
+  bmi: number | null;
+  bmiCategory: string | null;
+  sessionsThisWeek: number;
+  weight: number | null;
+  height: number | null;
 }
 
 /**
@@ -75,6 +88,77 @@ export async function getUserBookings(
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     throw error;
+  }
+}
+
+/**
+ * Get health & activity stats for a member
+ */
+export async function getMemberStats(userId: string): Promise<MemberStats> {
+  try {
+    // Fetch profile data for BMI
+    const profile = await prisma.profile.findUnique({
+      where: { userId },
+      select: {
+        height: true,
+        weight: true,
+      },
+    });
+
+    let bmi: number | null = null;
+    let bmiCategory: string | null = null;
+    const height = profile?.height ?? null;
+    const weight = profile?.weight ?? null;
+
+    if (height && height > 0 && weight) {
+      const rawBmi = weight / Math.pow(height / 100, 2);
+      bmi = Math.round(rawBmi * 10) / 10;
+
+      if (rawBmi < 18.5) {
+        bmiCategory = "Maigreur";
+      } else if (rawBmi < 25) {
+        bmiCategory = "Normal";
+      } else if (rawBmi < 30) {
+        bmiCategory = "Surpoids";
+      } else {
+        bmiCategory = "Obésité";
+      }
+    }
+
+    // Weekly sessions (Monday -> Sunday)
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+    const sessionsThisWeek = await prisma.booking.count({
+      where: {
+        userId,
+        status: {
+          in: ["CONFIRMED", "ATTENDED"],
+        },
+        startTime: {
+          gte: weekStart,
+          lte: weekEnd,
+        },
+      },
+    });
+
+    return {
+      bmi,
+      bmiCategory,
+      sessionsThisWeek,
+      weight,
+      height,
+    };
+  } catch (error) {
+    console.error("Error fetching member stats:", error);
+    return {
+      bmi: null,
+      bmiCategory: null,
+      sessionsThisWeek: 0,
+      weight: null,
+      height: null,
+    };
   }
 }
 
@@ -171,6 +255,10 @@ export async function updateUserProfile(
         ...(data.lastName !== undefined && { lastName: data.lastName }),
         ...(data.goals !== undefined && { goals: data.goals }),
         ...(data.medicalNotes !== undefined && { medicalNotes: data.medicalNotes }),
+        ...(data.height !== undefined && { height: data.height }),
+        ...(data.weight !== undefined && { weight: data.weight }),
+        ...(data.gender !== undefined && { gender: data.gender }),
+        ...(data.birthDate !== undefined && { birthDate: data.birthDate }),
       },
     });
 

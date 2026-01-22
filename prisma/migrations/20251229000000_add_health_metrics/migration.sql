@@ -1,0 +1,5 @@
+-- AlterTable: Add health metrics fields to Profile
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "height" DOUBLE PRECISION;
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "weight" DOUBLE PRECISION;
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "gender" TEXT;
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "birthDate" TIMESTAMP(3);

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Link from "next/link";
+import { GoogleSignInButton } from "@/components/auth/google-button";
 
 export function SignInForm() {
   const router = useRouter();
@@ -82,6 +83,20 @@ export function SignInForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Connexion..." : "Se connecter"}
           </Button>
+
+          {/* Divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-300" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-500">ou</span>
+            </div>
+          </div>
+
+          {/* Google Sign In */}
+          <GoogleSignInButton />
+
           <div className="text-center text-sm text-slate-600">
             Pas encore de compte ?{" "}
             <Link href="/auth/signup" className="text-primary hover:underline">

@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/plan-badge";
 import { Smartphone } from "lucide-react";
+import { PerformanceStats } from "@/components/member/performance-stats";
+import type { MemberStats } from "@/app/actions/member-actions";
 
 interface MemberDashboardClientProps {
   userName: string;
@@ -16,6 +18,7 @@ interface MemberDashboardClientProps {
   studioName: string;
   userId: string;
   userPlan: string | null;
+  stats: MemberStats | null;
 }
 
 export function MemberDashboardClient({
@@ -24,6 +27,7 @@ export function MemberDashboardClient({
   studioName,
   userId,
   userPlan,
+  stats,
 }: MemberDashboardClientProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -92,7 +96,7 @@ export function MemberDashboardClient({
   const planDisplayName = userPlan === "ZAPOY" ? "ZAPOY" : userPlan === "COACHING" ? "COACHING" : null;
 
   return (
-    <div className="space-y-6">
+  <div className="space-y-6">
       {/* Welcome Message */}
       <div className="border-b border-slate-200 pb-6">
         <div className="flex items-center justify-between">
@@ -107,6 +111,9 @@ export function MemberDashboardClient({
           {userPlan && <PlanBadge plan={userPlan} />}
         </div>
       </div>
+
+      {/* Performance Summary */}
+      <PerformanceStats stats={stats} />
 
       {/* Date Picker and Slots Grid */}
       <div className="grid gap-6 md:grid-cols-[300px_1fr]">

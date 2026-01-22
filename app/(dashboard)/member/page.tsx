@@ -3,6 +3,7 @@ import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { MemberDashboardClient } from "./member-dashboard-client";
 import { PaymentStatusHandler } from "@/components/payment-status";
 import { Suspense } from "react";
+import { getMemberStats } from "@/app/actions/member-actions";
 
 export default async function MemberDashboardPage() {
   // Get authenticated user
@@ -11,6 +12,8 @@ export default async function MemberDashboardPage() {
     where: { id: userId },
     include: { profile: true },
   });
+
+  const stats = await getMemberStats(userId);
 
   // Get the first studio (or user's home studio)
   const studio = await prisma.studio.findFirst({
@@ -44,6 +47,7 @@ export default async function MemberDashboardPage() {
         studioName={studio.name}
         userId={userId}
         userPlan={user.plan}
+        stats={stats}
       />
     </>
   );

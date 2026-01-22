@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { PaymentStatusHandler } from "@/components/payment-status";
 import { Suspense } from "react";
+import { BmiCalculator } from "@/components/bmi-calculator";
 
 export default function LandingPage() {
   return (
@@ -46,8 +47,11 @@ export default function LandingPage() {
         </p>
       </section>
 
+      {/* BMI / Profil Section */}
+      <BmiCalculator />
+
       {/* Pricing Section */}
-      <section className="max-w-7xl mx-auto w-full py-24 px-4">
+      <section id="pricing" className="max-w-7xl mx-auto w-full py-24 px-4">
         <div className="grid gap-8 md:grid-cols-3">
           {/* DIGITAL Plan */}
           <Card className="relative glass-card border-zinc-800 hover:border-zinc-700 transition-colors p-8">

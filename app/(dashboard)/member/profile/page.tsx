@@ -28,6 +28,10 @@ export default async function ProfilePage() {
         lastName: user.profile.lastName,
         goals: user.profile.goals,
         medicalNotes: user.profile.medicalNotes || "",
+        height: user.profile.height ?? null,
+        weight: user.profile.weight ?? null,
+        gender: user.profile.gender ?? null,
+        birthDate: user.profile.birthDate ?? null,
       }}
     />
   );
