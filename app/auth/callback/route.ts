@@ -9,6 +9,14 @@ export async function GET(request: Request) {
   const errorDescription = searchParams.get("error_description");
   const next = searchParams.get("next") ?? "/member";
 
+  console.log("=== OAuth Callback Debug ===");
+  console.log("Origin:", origin);
+  console.log("Code present:", !!code);
+  console.log("Error:", error);
+  console.log("SUPABASE_URL set:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("SUPABASE_ANON_KEY set:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  console.log("SUPABASE_ANON_KEY length:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length);
+
   // Handle OAuth errors from provider
   if (error) {
     console.error("OAuth error from provider:", error, errorDescription);
@@ -20,14 +28,19 @@ export async function GET(request: Request) {
   if (code) {
     try {
       const supabase = await createClient();
+      
+      console.log("Attempting code exchange...");
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
       if (exchangeError) {
-        console.error("Code exchange error:", exchangeError);
+        console.error("Code exchange error:", exchangeError.message);
+        console.error("Full error:", JSON.stringify(exchangeError));
         return NextResponse.redirect(
           `${origin}/auth/signin?error=exchange_error&message=${encodeURIComponent(exchangeError.message)}`
         );
       }
+
+      console.log("Code exchange successful, user:", data.user?.email);
 
       if (data.user) {
         // Check if user exists in our database
@@ -36,6 +49,7 @@ export async function GET(request: Request) {
         });
 
         if (!existingUser) {
+          console.log("Creating new user in database...");
           // Create user in our database for OAuth users
           const nameParts = data.user.user_metadata?.full_name?.split(" ") || [];
           const firstName = nameParts[0] || data.user.email?.split("@")[0] || "User";
@@ -55,6 +69,9 @@ export async function GET(request: Request) {
               },
             },
           });
+          console.log("User created successfully");
+        } else {
+          console.log("User already exists in database");
         }
 
         return NextResponse.redirect(`${origin}${next}`);
