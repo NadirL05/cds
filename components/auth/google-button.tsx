@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase-browser";
+import { toast } from "sonner";
 
 export function GoogleSignInButton() {
   const [loading, setLoading] = useState(false);
@@ -11,9 +12,16 @@ export function GoogleSignInButton() {
     setLoading(true);
     
     try {
+      // Check if environment variables are set
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        toast.error("Configuration Supabase manquante. Contactez l'administrateur.");
+        setLoading(false);
+        return;
+      }
+
       const supabase = createClient();
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -22,11 +30,23 @@ export function GoogleSignInButton() {
 
       if (error) {
         console.error("Google sign-in error:", error);
+        toast.error(`Erreur Google: ${error.message}`);
         setLoading(false);
+        return;
       }
-      // If successful, the user will be redirected to Google
+
+      // If no redirect URL, something went wrong
+      if (!data?.url) {
+        toast.error("Impossible d'initier la connexion Google. Vérifiez la configuration OAuth.");
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to Google OAuth
+      window.location.href = data.url;
     } catch (error) {
       console.error("Error initiating Google sign-in:", error);
+      toast.error("Une erreur inattendue s'est produite.");
       setLoading(false);
     }
   }
