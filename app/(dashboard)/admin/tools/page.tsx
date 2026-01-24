@@ -3,14 +3,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Sparkles, Mail, Loader2 } from "lucide-react";
+import { generateAIPlanForUser, isAIGenerationAvailable } from "@/app/actions/plan-actions";
 
 export default function AdminToolsPage() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isRecapLoading, setIsRecapLoading] = useState(false);
+  const [isGenerateLoading, setIsGenerateLoading] = useState(false);
+  const [isCronLoading, setIsCronLoading] = useState(false);
 
   const triggerWeeklyRecap = async () => {
     try {
-      setIsLoading(true);
+      setIsRecapLoading(true);
       const response = await fetch("/api/cron/weekly-recap", {
         method: "POST",
         headers: {
@@ -30,10 +35,90 @@ export default function AdminToolsPage() {
       toast.success("Récap hebdo déclenché !", {
         description: `Emails envoyés : ${data.sent ?? 0}, erreurs : ${data.errors ?? 0}`,
       });
-    } catch (error) {
+    } catch {
       toast.error("Erreur réseau lors de l'appel API.");
     } finally {
-      setIsLoading(false);
+      setIsRecapLoading(false);
+    }
+  };
+
+  const triggerAIGeneration = async () => {
+    try {
+      setIsGenerateLoading(true);
+
+      // Check if AI is available
+      const available = await isAIGenerationAvailable();
+      if (!available) {
+        toast.error("Génération IA non disponible", {
+          description: "La clé API OpenAI n'est pas configurée.",
+        });
+        return;
+      }
+
+      // Get current user ID from session (we'll use a test approach here)
+      // In a real scenario, you'd pass the user ID you want to generate for
+      toast.info("Génération en cours...", {
+        description: "Cela peut prendre jusqu'à 30 secondes.",
+      });
+
+      // For demo: This would normally take the current admin's ID or a selected user
+      // Here we just show the mechanism
+      const response = await fetch("/api/cron/weekly-generate", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || "test-secret-123"}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        toast.error("Erreur lors de la génération", {
+          description: data.error || data.message || "Une erreur est survenue.",
+        });
+        return;
+      }
+
+      toast.success("Génération terminée !", {
+        description: `${data.stats?.generated ?? 0} plans générés, ${data.stats?.errors ?? 0} erreurs`,
+      });
+    } catch {
+      toast.error("Erreur réseau lors de l'appel API.");
+    } finally {
+      setIsGenerateLoading(false);
+    }
+  };
+
+  const triggerCronGeneration = async () => {
+    try {
+      setIsCronLoading(true);
+      toast.info("Déclenchement du cron...", {
+        description: "Génération des plans pour tous les membres actifs.",
+      });
+
+      const response = await fetch("/api/cron/weekly-generate", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer test-secret-123",
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        toast.error("Erreur lors de l'exécution du cron", {
+          description: data.error || data.message || "Une erreur est survenue.",
+        });
+        return;
+      }
+
+      toast.success("Cron exécuté avec succès !", {
+        description: `${data.stats?.generated ?? 0} plans générés pour ${data.stats?.totalActiveUsers ?? 0} membres actifs`,
+      });
+    } catch {
+      toast.error("Erreur réseau lors de l'appel API.");
+    } finally {
+      setIsCronLoading(false);
     }
   };
 
@@ -47,9 +132,13 @@ export default function AdminToolsPage() {
       </header>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="glass-card border-zinc-800">
+        {/* Weekly Recap */}
+        <Card>
           <CardHeader>
-            <CardTitle>Weekly Recap Trigger</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Weekly Recap Trigger
+            </CardTitle>
             <CardDescription>
               Force l&apos;envoi du récapitulatif hebdomadaire à tous les membres actifs.
             </CardDescription>
@@ -57,14 +146,87 @@ export default function AdminToolsPage() {
           <CardContent>
             <Button
               onClick={triggerWeeklyRecap}
-              disabled={isLoading}
-              className="bg-[#ff5500] hover:bg-[#ff6600] text-white"
+              disabled={isRecapLoading}
+              className="w-full"
             >
-              {isLoading ? "Envoi en cours..." : "Envoyer les emails maintenant"}
+              {isRecapLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                "Envoyer les emails"
+              )}
             </Button>
             <p className="mt-3 text-xs text-muted-foreground">
-              Utilise le token de test <code>test-secret-123</code>. À sécuriser différemment en production.
+              Token: <code className="bg-muted px-1 rounded">test-secret-123</code>
             </p>
+          </CardContent>
+        </Card>
+
+        {/* AI Plan Generation - Cron */}
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Génération IA (Cron)
+              <Badge variant="secondary" className="ml-auto">OpenAI</Badge>
+            </CardTitle>
+            <CardDescription>
+              Déclenche la génération des plans sport & nutrition pour tous les membres actifs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={triggerCronGeneration}
+              disabled={isCronLoading}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
+              {isCronLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Génération en cours...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Générer les plans (tous)
+                </>
+              )}
+            </Button>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Génère les plans pour la semaine prochaine. Nécessite <code className="bg-muted px-1 rounded">OPENAI_API_KEY</code>
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* API Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuration API</CardTitle>
+            <CardDescription>
+              Endpoints disponibles pour les automatisations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="text-sm">
+              <p className="font-medium">Weekly Recap:</p>
+              <code className="text-xs bg-muted px-2 py-1 rounded block mt-1">
+                POST /api/cron/weekly-recap
+              </code>
+            </div>
+            <div className="text-sm">
+              <p className="font-medium">AI Generation:</p>
+              <code className="text-xs bg-muted px-2 py-1 rounded block mt-1">
+                POST /api/cron/weekly-generate
+              </code>
+            </div>
+            <div className="mt-4 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+              <p className="text-xs text-yellow-600">
+                <strong>Sécurité:</strong> En production, utilisez <code>CRON_SECRET</code> 
+                comme token Bearer pour authentifier les appels.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

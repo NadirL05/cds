@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import {
+  Menu,
+  LayoutDashboard,
+  Users,
+  Calendar,
+  UserCog,
+  BarChart3,
+  Settings,
+  Wrench,
+  Home,
+  LucideIcon,
+} from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -7,14 +18,25 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
-import { cn } from "@/lib/utils";
 import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { AdminSidebarNav } from "./admin-sidebar-nav";
 
-const adminNavigation = [
-  { name: "Members", href: "/admin/members" },
-  { name: "Outils & Tests", href: "/admin/tools" },
+type NavigationItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+const adminNavigation: NavigationItem[] = [
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Membres", href: "/admin/members", icon: Users },
+  { name: "Réservations", href: "/admin/bookings", icon: Calendar },
+  { name: "Coachs", href: "/admin/coaches", icon: UserCog },
+  { name: "Statistiques", href: "/admin/stats", icon: BarChart3 },
+  { name: "Paramètres", href: "/admin/settings", icon: Settings },
+  { name: "Outils & Tests", href: "/admin/tools", icon: Wrench },
 ];
 
 export default async function AdminLayout({
@@ -50,7 +72,7 @@ export default async function AdminLayout({
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </DrawerTrigger>
-              <DrawerContent className="w-[300px] max-w-[85vw]">
+              <DrawerContent className="w-[300px] max-w-[85vw] bg-sidebar text-sidebar-foreground">
                 <div className="flex flex-col p-4">
                   <Link
                     href="/admin"
@@ -58,17 +80,16 @@ export default async function AdminLayout({
                   >
                     CDS Admin
                   </Link>
-                  <nav className="flex flex-col space-y-2">
-                    {adminNavigation.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="rounded-lg px-4 py-2 text-sm font-medium hover:bg-accent"
-                      >
-                        {item.name}
-                      </Link>
-                    ))}
-                  </nav>
+                  <AdminSidebarNav navigation={adminNavigation} />
+                  <div className="mt-6 border-t pt-4">
+                    <Link
+                      href="/member"
+                      className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    >
+                      <Home className="h-4 w-4" />
+                      Espace Membre
+                    </Link>
+                  </div>
                 </div>
               </DrawerContent>
             </Drawer>
@@ -79,19 +100,15 @@ export default async function AdminLayout({
             <span className="text-xl font-bold text-primary">CDS Admin</span>
           </Link>
 
-          {/* Desktop Navigation + User Menu */}
-          <div className="hidden md:flex md:items-center md:space-x-6">
-            <nav className="flex items-center space-x-6">
-              {adminNavigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+          {/* Desktop Header Navigation + User Menu */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            <Link
+              href="/member"
+              className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              <Home className="h-4 w-4" />
+              Espace Membre
+            </Link>
             <UserMenu />
           </div>
         </div>
@@ -100,21 +117,9 @@ export default async function AdminLayout({
       {/* Main Content Area */}
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-64 border-r bg-card md:block">
+        <aside className="hidden w-64 border-r bg-sidebar md:block">
           <div className="flex h-full flex-col p-6">
-            <nav className="space-y-2">
-              {adminNavigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "block rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+            <AdminSidebarNav navigation={adminNavigation} />
           </div>
         </aside>
 

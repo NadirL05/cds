@@ -23,6 +23,7 @@ model User {
   homeStudio           Studio?              @relation(fields: [homeStudioId], references: [id])
   coachingPreferences  CoachingPreferences?
   subscription         Subscription?
+  weeklyPlans          WeeklyPlan[]
 }
 
 model Profile {
@@ -176,4 +177,24 @@ model Subscription {
   
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+}
+
+// Weekly AI-Generated Plans
+model WeeklyPlan {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  weekStartDate DateTime // Monday of the week this plan covers
+  status        String   @default("GENERATED") // "GENERATED", "READ"
+  
+  // JSON data for the plans
+  sportData     Json?    // Workout plan: Array of { dayName, exercises: [{name, sets, reps, note}] }
+  nutritionData Json?    // Meal plan: Array of { dayName, meals: {breakfast, lunch, snack, dinner} }
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([userId, weekStartDate]) // One plan per user per week
+  @@index([userId])
 }

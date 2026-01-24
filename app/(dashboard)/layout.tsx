@@ -1,5 +1,17 @@
 import Link from "next/link";
-import { Menu, Shield, CalendarDays, LucideIcon } from "lucide-react";
+import {
+  Menu,
+  Shield,
+  CalendarDays,
+  LucideIcon,
+  LayoutDashboard,
+  Calendar,
+  User,
+  CreditCard,
+  Dumbbell,
+  Utensils,
+  History,
+} from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -41,9 +53,13 @@ export default async function DashboardLayout({
 
   // Create dynamic navigation array
   const navigation: NavigationItem[] = [
-    { name: "Dashboard", href: "/member" },
-    { name: "My Bookings", href: "/member/bookings" },
-    { name: "Profile", href: "/member/profile" },
+    { name: "Dashboard", href: "/member", icon: LayoutDashboard },
+    { name: "Mes Réservations", href: "/member/bookings", icon: Calendar },
+    { name: "Mon Abonnement", href: "/member/subscription", icon: CreditCard },
+    { name: "Programme Sportif", href: "/member/program", icon: Dumbbell },
+    { name: "Programme Nutrition", href: "/member/nutrition", icon: Utensils },
+    { name: "Historique", href: "/member/history", icon: History },
+    { name: "Mon Profil", href: "/member/profile", icon: User },
   ];
 
   // Add Coach link if user is COACH, FRANCHISE_OWNER or SUPER_ADMIN
@@ -58,8 +74,8 @@ export default async function DashboardLayout({
   // Add Admin link if user is FRANCHISE_OWNER or SUPER_ADMIN
   if (user?.role === "FRANCHISE_OWNER" || user?.role === "SUPER_ADMIN") {
     navigation.push({
-      name: "Admin Espace",
-      href: "/admin/members",
+      name: "Espace Admin",
+      href: "/admin",
       icon: Shield,
     });
   }

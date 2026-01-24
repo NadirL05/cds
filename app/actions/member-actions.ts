@@ -276,3 +276,373 @@ export async function updateUserProfile(
     };
   }
 }
+
+/**
+ * Get subscription details for a user
+ */
+export interface SubscriptionDetails {
+  plan: string | null;
+  status: string | null;
+  stripeSubscriptionId: string | null;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  trialEndsAt: Date | null;
+  sessionsUsedThisMonth: number;
+  maxSessionsPerMonth: number | null;
+}
+
+export async function getSubscriptionDetails(
+  userId: string
+): Promise<SubscriptionDetails> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        plan: true,
+        subscriptionStatus: true,
+        subscription: {
+          select: {
+            stripeSubscriptionId: true,
+            currentPeriodStart: true,
+            currentPeriodEnd: true,
+            trialEndsAt: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    // Count sessions used this month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const sessionsUsedThisMonth = await prisma.booking.count({
+      where: {
+        userId,
+        status: {
+          in: ["CONFIRMED", "ATTENDED", "COMPLETED"],
+        },
+        startTime: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      },
+    });
+
+    // Determine max sessions based on plan
+    let maxSessionsPerMonth: number | null = null;
+    if (user?.plan === "essential") {
+      maxSessionsPerMonth = 4;
+    } else if (user?.plan === "premium") {
+      maxSessionsPerMonth = 8;
+    } else if (user?.plan === "unlimited") {
+      maxSessionsPerMonth = null; // Unlimited
+    }
+
+    return {
+      plan: user?.plan || null,
+      status: user?.subscriptionStatus || user?.subscription?.status || null,
+      stripeSubscriptionId: user?.subscription?.stripeSubscriptionId || null,
+      currentPeriodStart: user?.subscription?.currentPeriodStart || null,
+      currentPeriodEnd: user?.subscription?.currentPeriodEnd || null,
+      trialEndsAt: user?.subscription?.trialEndsAt || null,
+      sessionsUsedThisMonth,
+      maxSessionsPerMonth,
+    };
+  } catch (error) {
+    console.error("Error fetching subscription details:", error);
+    return {
+      plan: null,
+      status: null,
+      stripeSubscriptionId: null,
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      trialEndsAt: null,
+      sessionsUsedThisMonth: 0,
+      maxSessionsPerMonth: null,
+    };
+  }
+}
+
+/**
+ * Get coaching preferences for sports program
+ */
+export interface SportsProgramData {
+  goal: string | null;
+  level: string | null;
+  frequency: string | null;
+  profile: {
+    firstName: string;
+    goals: string[];
+    weight: number | null;
+    height: number | null;
+  } | null;
+  recentSessions: {
+    id: string;
+    date: Date;
+    programUsed: string | null;
+    intensityLog: unknown;
+  }[];
+}
+
+export async function getSportsProgramData(
+  userId: string
+): Promise<SportsProgramData> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        profile: {
+          select: {
+            firstName: true,
+            goals: true,
+            weight: true,
+            height: true,
+          },
+        },
+        coachingPreferences: {
+          select: {
+            goal: true,
+            level: true,
+            frequency: true,
+          },
+        },
+      },
+    });
+
+    // Get recent completed sessions
+    const recentSessions = await prisma.booking.findMany({
+      where: {
+        userId,
+        status: {
+          in: ["ATTENDED", "COMPLETED"],
+        },
+      },
+      select: {
+        id: true,
+        startTime: true,
+        programUsed: true,
+        intensityLog: true,
+      },
+      orderBy: {
+        startTime: "desc",
+      },
+      take: 10,
+    });
+
+    return {
+      goal: user?.coachingPreferences?.goal || null,
+      level: user?.coachingPreferences?.level || null,
+      frequency: user?.coachingPreferences?.frequency || null,
+      profile: user?.profile || null,
+      recentSessions: recentSessions.map((s) => ({
+        id: s.id,
+        date: s.startTime,
+        programUsed: s.programUsed,
+        intensityLog: s.intensityLog,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching sports program data:", error);
+    return {
+      goal: null,
+      level: null,
+      frequency: null,
+      profile: null,
+      recentSessions: [],
+    };
+  }
+}
+
+/**
+ * Get nutrition program data
+ */
+export interface NutritionProgramData {
+  eatsMeat: boolean | null;
+  eatsFish: boolean | null;
+  eatsEggs: boolean | null;
+  veggies: string[];
+  starches: string[];
+  drinks: string[];
+  dietaryRestrictions: string | null;
+  profile: {
+    weight: number | null;
+    height: number | null;
+    goals: string[];
+  } | null;
+  goal: string | null;
+}
+
+export async function getNutritionProgramData(
+  userId: string
+): Promise<NutritionProgramData> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        profile: {
+          select: {
+            weight: true,
+            height: true,
+            goals: true,
+          },
+        },
+        coachingPreferences: {
+          select: {
+            goal: true,
+            eatsMeat: true,
+            eatsFish: true,
+            eatsEggs: true,
+            veggies: true,
+            starches: true,
+            drinks: true,
+            dietaryRestrictions: true,
+          },
+        },
+      },
+    });
+
+    return {
+      eatsMeat: user?.coachingPreferences?.eatsMeat ?? null,
+      eatsFish: user?.coachingPreferences?.eatsFish ?? null,
+      eatsEggs: user?.coachingPreferences?.eatsEggs ?? null,
+      veggies: user?.coachingPreferences?.veggies || [],
+      starches: user?.coachingPreferences?.starches || [],
+      drinks: user?.coachingPreferences?.drinks || [],
+      dietaryRestrictions:
+        user?.coachingPreferences?.dietaryRestrictions || null,
+      profile: user?.profile || null,
+      goal: user?.coachingPreferences?.goal || null,
+    };
+  } catch (error) {
+    console.error("Error fetching nutrition program data:", error);
+    return {
+      eatsMeat: null,
+      eatsFish: null,
+      eatsEggs: null,
+      veggies: [],
+      starches: [],
+      drinks: [],
+      dietaryRestrictions: null,
+      profile: null,
+      goal: null,
+    };
+  }
+}
+
+/**
+ * Get booking history with stats
+ */
+export interface BookingHistoryData {
+  totalSessions: number;
+  sessionsThisMonth: number;
+  sessionsLastMonth: number;
+  averageSessionsPerWeek: number;
+  mostUsedProgram: string | null;
+  bookings: {
+    id: string;
+    startTime: Date;
+    endTime: Date;
+    status: string;
+    programUsed: string | null;
+    studioName: string;
+  }[];
+}
+
+export async function getBookingHistory(
+  userId: string
+): Promise<BookingHistoryData> {
+  try {
+    const now = new Date();
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Get all bookings
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        studio: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: "desc",
+      },
+    });
+
+    const totalSessions = bookings.filter((b) =>
+      ["ATTENDED", "COMPLETED", "CONFIRMED"].includes(b.status)
+    ).length;
+
+    const sessionsThisMonth = bookings.filter(
+      (b) =>
+        ["ATTENDED", "COMPLETED", "CONFIRMED"].includes(b.status) &&
+        b.startTime >= startOfThisMonth
+    ).length;
+
+    const sessionsLastMonth = bookings.filter(
+      (b) =>
+        ["ATTENDED", "COMPLETED", "CONFIRMED"].includes(b.status) &&
+        b.startTime >= startOfLastMonth &&
+        b.startTime <= endOfLastMonth
+    ).length;
+
+    // Calculate average sessions per week (based on account age)
+    const firstBooking = bookings[bookings.length - 1];
+    let averageSessionsPerWeek = 0;
+    if (firstBooking) {
+      const weeksSinceFirstBooking = Math.max(
+        1,
+        Math.ceil(
+          (now.getTime() - new Date(firstBooking.startTime).getTime()) /
+            (7 * 24 * 60 * 60 * 1000)
+        )
+      );
+      averageSessionsPerWeek =
+        Math.round((totalSessions / weeksSinceFirstBooking) * 10) / 10;
+    }
+
+    // Find most used program
+    const programCounts = bookings.reduce((acc, b) => {
+      if (b.programUsed) {
+        acc[b.programUsed] = (acc[b.programUsed] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const mostUsedProgram =
+      Object.entries(programCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    return {
+      totalSessions,
+      sessionsThisMonth,
+      sessionsLastMonth,
+      averageSessionsPerWeek,
+      mostUsedProgram,
+      bookings: bookings.map((b) => ({
+        id: b.id,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        status: b.status,
+        programUsed: b.programUsed,
+        studioName: b.studio.name,
+      })),
+    };
+  } catch (error) {
+    console.error("Error fetching booking history:", error);
+    return {
+      totalSessions: 0,
+      sessionsThisMonth: 0,
+      sessionsLastMonth: 0,
+      averageSessionsPerWeek: 0,
+      mostUsedProgram: null,
+      bookings: [],
+    };
+  }
+}
