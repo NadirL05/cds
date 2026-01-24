@@ -283,7 +283,7 @@ Génère maintenant le programme personnalisé complet en JSON:`;
 
     // If it's a Zod validation error, log details
     if (error instanceof z.ZodError) {
-      console.error("Validation errors:", error.errors);
+      console.error("Validation errors:", error.issues);
     }
 
     throw error;
