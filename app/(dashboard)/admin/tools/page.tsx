@@ -6,11 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Sparkles, Mail, Loader2 } from "lucide-react";
-import { generateAIPlanForUser, isAIGenerationAvailable } from "@/app/actions/plan-actions";
 
 export default function AdminToolsPage() {
   const [isRecapLoading, setIsRecapLoading] = useState(false);
-  const [isGenerateLoading, setIsGenerateLoading] = useState(false);
   const [isCronLoading, setIsCronLoading] = useState(false);
 
   const triggerWeeklyRecap = async () => {
@@ -42,53 +40,8 @@ export default function AdminToolsPage() {
     }
   };
 
-  const triggerAIGeneration = async () => {
-    try {
-      setIsGenerateLoading(true);
-
-      // Check if AI is available
-      const available = await isAIGenerationAvailable();
-      if (!available) {
-        toast.error("Génération IA non disponible", {
-          description: "La clé API OpenAI n'est pas configurée.",
-        });
-        return;
-      }
-
-      // Get current user ID from session (we'll use a test approach here)
-      // In a real scenario, you'd pass the user ID you want to generate for
-      toast.info("Génération en cours...", {
-        description: "Cela peut prendre jusqu'à 30 secondes.",
-      });
-
-      // For demo: This would normally take the current admin's ID or a selected user
-      // Here we just show the mechanism
-      const response = await fetch("/api/cron/weekly-generate", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || "test-secret-123"}`,
-        },
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        toast.error("Erreur lors de la génération", {
-          description: data.error || data.message || "Une erreur est survenue.",
-        });
-        return;
-      }
-
-      toast.success("Génération terminée !", {
-        description: `${data.stats?.generated ?? 0} plans générés, ${data.stats?.errors ?? 0} erreurs`,
-      });
-    } catch {
-      toast.error("Erreur réseau lors de l'appel API.");
-    } finally {
-      setIsGenerateLoading(false);
-    }
-  };
-
+  // Note: In production, this endpoint should only be triggered by Vercel Cron
+  // This manual trigger uses a hardcoded test secret for development purposes only
   const triggerCronGeneration = async () => {
     try {
       setIsCronLoading(true);
@@ -233,4 +186,3 @@ export default function AdminToolsPage() {
     </div>
   );
 }
-

@@ -113,10 +113,10 @@ export async function getAdminDashboardStats(
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
+    // Create startOfDay without mutating now
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Create startOfWeek from the original now (not mutated)
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
 
     // Get total members
     const totalMembers = await prisma.user.count({
