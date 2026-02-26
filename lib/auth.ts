@@ -1,6 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -17,6 +18,10 @@ export const authOptions: NextAuthOptions = {
     newUser: "/auth/new-user",
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -58,11 +63,33 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  events: {
+    async createUser({ user }) {
+      await prisma.profile.create({
+        data: {
+          userId: user.id,
+          firstName: user.name?.split(" ")[0] || user.email?.split("@")[0] || "User",
+          lastName: user.name?.split(" ").slice(1).join(" ") || "",
+          goals: [],
+        },
+      });
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        // Credentials provider returns role directly; OAuth users need a DB lookup
+        const role = (user as any).role;
+        if (role) {
+          token.role = role;
+        } else {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id as string },
+            select: { role: true },
+          });
+          token.role = dbUser?.role ?? "MEMBER";
+        }
       }
       return token;
     },
@@ -76,4 +103,3 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
-
