@@ -8,15 +8,16 @@ import { Button } from "@/components/ui/button";
 
 export function AiChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const { messages, append, isLoading } = useChat({
-    api: "/api/chat",
-    // Le backend renvoie un flux texte (toTextStreamResponse),
-    // on aligne donc le protocole côté client.
-    streamProtocol: "text",
-  });
+  // @ts-ignore : Contournement du bug temporaire de typage du SDK Vercel AI
+  const { messages, input, handleInputChange, handleSubmit, isLoading } =
+    useChat({
+      api: "/api/chat",
+      // Le backend renvoie un flux texte (toTextStreamResponse),
+      // on aligne donc le protocole côté client.
+      streamProtocol: "text",
+    });
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -114,13 +115,7 @@ export function AiChatWidget() {
 
           {/* Input */}
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const value = input.trim();
-              if (!value) return;
-              await append({ role: "user", content: value });
-              setInput("");
-            }}
+            onSubmit={handleSubmit}
             className="shrink-0 border-t border-zinc-800 bg-zinc-950/80 px-3 py-2"
           >
             <div className="flex items-center gap-2">
@@ -128,7 +123,7 @@ export function AiChatWidget() {
                 className="flex-1 rounded-full border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                 placeholder="Pose ta question au coach..."
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
               />
               <Button
                 type="submit"
