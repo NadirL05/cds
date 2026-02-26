@@ -14,10 +14,8 @@ export function AiChatWidget() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: "/api/chat",
-      // Le backend renvoie un flux texte (toTextStreamResponse),
-      // on aligne donc le protocole côté client.
       streamProtocol: "text",
-    });
+    } as any);
 
   useEffect(() => {
     if (messagesEndRef.current) {
