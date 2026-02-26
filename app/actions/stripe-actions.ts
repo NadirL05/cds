@@ -54,7 +54,7 @@ export async function createCheckoutSession(planName: string) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/member?success=true`,
+      success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/?canceled=true`,
       metadata: {
         userId: userId,
