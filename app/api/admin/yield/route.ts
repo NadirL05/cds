@@ -1,45 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { analyzeAndTriggerYield } from "@/app/actions/yield-actions";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getUserIdOrRedirect } from "@/lib/auth-helpers";
+import { analyzeAndTriggerYield } from "@/app/actions/yield-actions";
 
-export async function POST(_req: NextRequest) {
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
   try {
-    const adminUserId = await getUserIdOrRedirect();
+    // 1. Verify authentication without using redirect()
+    const session = await getServerSession(authOptions);
 
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const adminUserId = session.user.id;
+
+    // 2. Fetch admin user data
     const adminUser = await prisma.user.findUnique({
       where: { id: adminUserId },
-      select: { homeStudioId: true },
+      select: { homeStudioId: true, role: true },
     });
 
-    if (!adminUser?.homeStudioId) {
+    // 3. Verify authorization and studio assignment
+    if (
+      !adminUser?.homeStudioId ||
+      (adminUser.role !== "FRANCHISE_OWNER" &&
+        adminUser.role !== "SUPER_ADMIN")
+    ) {
       return NextResponse.json(
-        { error: "Aucun studio rattaché à cet administrateur." },
-        { status: 400 }
+        {
+          error: "Forbidden: No studio assigned or insufficient rights",
+        },
+        { status: 403 }
       );
     }
 
+    // 4. Trigger the yield management algorithm
     const result = await analyzeAndTriggerYield(adminUser.homeStudioId);
 
-    if (!result.success && result.error) {
-      return NextResponse.json(
-        result,
-        { status: 500 }
-      );
-    }
-
+    // 5. Return the result safely
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Erreur API yield admin:", error);
+    console.error("Yield API Error:", error);
     return NextResponse.json(
       {
-        success: false,
-        emptySlotsFound: 0,
-        emailsSent: 0,
-        error: "Erreur serveur lors du déclenchement du yield",
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : "Unknown",
       },
       { status: 500 }
     );
   }
 }
-
