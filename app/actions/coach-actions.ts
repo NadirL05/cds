@@ -173,6 +173,22 @@ export async function checkInUser(
   bookingId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const callerId = await getUserIdOrRedirect();
+
+    const caller = await prisma.user.findUnique({
+      where: { id: callerId },
+      select: { role: true },
+    });
+
+    if (
+      !caller ||
+      (caller.role !== "COACH" &&
+        caller.role !== "FRANCHISE_OWNER" &&
+        caller.role !== "SUPER_ADMIN")
+    ) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     await prisma.booking.update({
       where: { id: bookingId },
       data: { status: "ATTENDED" },

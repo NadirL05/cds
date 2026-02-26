@@ -349,6 +349,10 @@ export async function updateMemberRole(
       return { success: false, error: "Admin user does not have a home studio" };
     }
 
+    if (adminUser.role !== "FRANCHISE_OWNER" && adminUser.role !== "SUPER_ADMIN") {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
     // Verify the member belongs to the same studio
     const member = await prisma.user.findUnique({
       where: { id: memberId },

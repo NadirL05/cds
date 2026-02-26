@@ -178,7 +178,7 @@ export async function getMemberStats(userId: string): Promise<MemberStats> {
  * Cancel a booking by deleting it
  * Security check: ensures booking belongs to user
  */
-export async function cancelBooking(
+export async function cancelUserBooking(
   bookingId: string,
   userId: string
 ): Promise<{ success: boolean; error?: string }> {

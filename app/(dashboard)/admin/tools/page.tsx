@@ -15,11 +15,10 @@ export default function AdminToolsPage() {
   const triggerWeeklyRecap = async () => {
     try {
       setIsRecapLoading(true);
-      const response = await fetch("/api/cron/weekly-recap", {
+      const response = await fetch("/api/admin/cron-trigger", {
         method: "POST",
-        headers: {
-          Authorization: "Bearer test-secret-123",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "recap" }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -41,8 +40,6 @@ export default function AdminToolsPage() {
     }
   };
 
-  // Note: In production, this endpoint should only be triggered by Vercel Cron
-  // This manual trigger uses a hardcoded test secret for development purposes only
   const triggerCronGeneration = async () => {
     try {
       setIsCronLoading(true);
@@ -50,11 +47,10 @@ export default function AdminToolsPage() {
         description: "Génération des plans pour tous les membres actifs.",
       });
 
-      const response = await fetch("/api/cron/weekly-generate", {
+      const response = await fetch("/api/admin/cron-trigger", {
         method: "POST",
-        headers: {
-          Authorization: "Bearer test-secret-123",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "generate" }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -142,9 +138,6 @@ export default function AdminToolsPage() {
                 "Envoyer les emails"
               )}
             </Button>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Token: <code className="bg-muted px-1 rounded">test-secret-123</code>
-            </p>
           </CardContent>
         </Card>
 
@@ -194,21 +187,23 @@ export default function AdminToolsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="text-sm">
-              <p className="font-medium">Weekly Recap:</p>
+              <p className="font-medium">Proxy admin (ce bouton) :</p>
               <code className="text-xs bg-muted px-2 py-1 rounded block mt-1">
-                POST /api/cron/weekly-recap
+                POST /api/admin/cron-trigger
               </code>
             </div>
             <div className="text-sm">
-              <p className="font-medium">AI Generation:</p>
+              <p className="font-medium">Cron Vercel (production) :</p>
+              <code className="text-xs bg-muted px-2 py-1 rounded block mt-1">
+                POST /api/cron/weekly-recap
+              </code>
               <code className="text-xs bg-muted px-2 py-1 rounded block mt-1">
                 POST /api/cron/weekly-generate
               </code>
             </div>
-            <div className="mt-4 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
-              <p className="text-xs text-yellow-600">
-                <strong>Sécurité:</strong> En production, utilisez <code>CRON_SECRET</code> 
-                comme token Bearer pour authentifier les appels.
+            <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+              <p className="text-xs text-green-600">
+                <strong>Sécurisé :</strong> Le proxy vérifie la session admin et lit <code>CRON_SECRET</code> côté serveur.
               </p>
             </div>
           </CardContent>

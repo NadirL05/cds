@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { generateWeeklyPlan, UserProfileForAI, UserPreferencesForAI } from "@/lib/openai";
 import { startOfWeek, addWeeks } from "date-fns";
 
+export const dynamic = "force-dynamic";
+
 // Configuration
 const CRON_SECRET = process.env.CRON_SECRET;
 const BATCH_SIZE = 5; // Process users in batches to avoid rate limits

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { startOfDay, subDays } from "date-fns";
+import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 
 const POINTS_PER_ACTION = 10;
 
@@ -23,6 +24,11 @@ export async function validateDailyAction(
   { success: true; pointsAdded: number; newStreak: number } | { success: false; error: string }
 > {
   try {
+    const sessionUserId = await getUserIdOrRedirect();
+    if (sessionUserId !== userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     const profile = await prisma.profile.findUnique({
       where: { userId },
       select: {

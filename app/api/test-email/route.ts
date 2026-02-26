@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { resend } from "@/lib/resend";
 import { WelcomeEmail } from "@/components/emails/welcome-email";
 import { render } from "@react-email/render";
 import React from "react";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userRole = (session.user as any).role;
+  if (userRole !== "SUPER_ADMIN" && userRole !== "FRANCHISE_OWNER") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const { email, firstName, planName } = await request.json();
 
