@@ -167,6 +167,9 @@ export async function getMemberStats(userId: string): Promise<MemberStats> {
       sessionsThisWeek: 0,
       weight: null,
       height: null,
+      currentStreak: 0,
+      longestStreak: 0,
+      totalPoints: 0,
     };
   }
 }
