@@ -23,10 +23,7 @@ export async function POST(_req: NextRequest) {
 
     if (!result.success && result.error) {
       return NextResponse.json(
-        {
-          success: false,
-          ...result,
-        },
+        result,
         { status: 500 }
       );
     }
