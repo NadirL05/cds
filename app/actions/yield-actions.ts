@@ -69,7 +69,7 @@ export async function analyzeAndTriggerYield(studioId: string): Promise<YieldRes
         homeStudioId: studioId,
         plan: "DIGITAL",
         email: {
-          not: null,
+          not: "",
         },
       },
       include: {
