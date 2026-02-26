@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/plan-badge";
 import { Smartphone } from "lucide-react";
 import { PerformanceStats } from "@/components/member/performance-stats";
+import { GamificationWidget } from "@/components/member/gamification-widget";
 import type { MemberStats } from "@/app/actions/member-actions";
 
 interface MemberDashboardClientProps {
@@ -112,6 +113,9 @@ export function MemberDashboardClient({
         </div>
       </div>
 
+      {/* Gamification */}
+      <GamificationWidget stats={stats} />
+
       {/* Performance Summary */}
       <PerformanceStats stats={stats} />
 
@@ -130,7 +134,12 @@ export function MemberDashboardClient({
               {format(selectedDate, "EEEE, MMMM d, yyyy", { locale: fr })}
             </p>
           </div>
-          <BookingSlots studioId={studioId} date={selectedDate} userId={userId} />
+          <BookingSlots
+            studioId={studioId}
+            date={selectedDate}
+            userId={userId}
+            userPlan={userPlan}
+          />
         </div>
       </div>
     </div>

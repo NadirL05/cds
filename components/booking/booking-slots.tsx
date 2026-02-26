@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAvailableSlots, bookSlot } from "@/app/actions/booking-actions";
+import { createDropInCheckout } from "@/app/actions/stripe-actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { AvailableSlot } from "@/app/actions/booking-actions";
@@ -14,9 +15,10 @@ interface BookingSlotsProps {
   studioId: string;
   date: Date;
   userId: string;
+  userPlan: string | null;
 }
 
-export function BookingSlots({ studioId, date, userId }: BookingSlotsProps) {
+export function BookingSlots({ studioId, date, userId, userPlan }: BookingSlotsProps) {
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<Record<string, boolean>>({});
@@ -55,20 +57,40 @@ export function BookingSlots({ studioId, date, userId }: BookingSlotsProps) {
     setBooking((prev) => ({ ...prev, [slotId]: true }));
 
     try {
-      const result = await bookSlot(userId, studioId, slot.startTime, "Metabolique");
-
-      if (result.success) {
-        toast.success("Booking confirmed!");
-        // Refresh the page data
-        router.refresh();
-        // Reload slots to update counts
-        await loadSlots();
+      if (userPlan === "DIGITAL") {
+        // Flux Drop-in pour les membres 100% Digital
+        const checkoutUrl = await createDropInCheckout(studioId, slot.startTime);
+        if (checkoutUrl) {
+          toast.success("Redirection vers le paiement sécurisé...");
+          window.location.href = checkoutUrl;
+        } else {
+          toast.error("Impossible de lancer le paiement Drop-in.");
+        }
       } else {
-        toast.error(result.error || "Error booking slot");
+        const result = await bookSlot(
+          userId,
+          studioId,
+          slot.startTime,
+          "Metabolique"
+        );
+
+        if (result.success) {
+          toast.success("Booking confirmed!");
+          // Refresh the page data
+          router.refresh();
+          // Reload slots to update counts
+          await loadSlots();
+        } else {
+          toast.error(result.error || "Error booking slot");
+        }
       }
     } catch (error) {
-      console.error("Error booking slot:", error);
-      toast.error("Error booking slot");
+      console.error("Error booking slot / drop-in:", error);
+      toast.error(
+        userPlan === "DIGITAL"
+          ? "Erreur lors du démarrage du paiement Drop-in."
+          : "Error booking slot"
+      );
     } finally {
       setBooking((prev) => {
         const next = { ...prev };
@@ -140,13 +162,23 @@ export function BookingSlots({ studioId, date, userId }: BookingSlotsProps) {
                 disabled={slot.isFull || isBooking}
                 className={cn(
                   "w-full",
-                  slot.isFull 
+                  slot.isFull
                     ? "bg-slate-100 text-slate-400 cursor-not-allowed" 
+                    : userPlan === "DIGITAL"
+                    ? "bg-orange-500 hover:bg-orange-600 text-white"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
                 )}
                 variant={slot.isFull ? "outline" : "default"}
               >
-                {isBooking ? "Booking..." : slot.isFull ? "Full" : "Book Now"}
+                {isBooking
+                  ? userPlan === "DIGITAL"
+                    ? "Paiement en cours..."
+                    : "Booking..."
+                  : slot.isFull
+                  ? "Full"
+                  : userPlan === "DIGITAL"
+                  ? "Acheter (15€)"
+                  : "Book Now"}
               </Button>
             </CardContent>
           </Card>

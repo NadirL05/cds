@@ -34,6 +34,9 @@ export interface MemberStats {
   sessionsThisWeek: number;
   weight: number | null;
   height: number | null;
+  currentStreak: number;
+  longestStreak: number;
+  totalPoints: number;
 }
 
 /**
@@ -96,12 +99,15 @@ export async function getUserBookings(
  */
 export async function getMemberStats(userId: string): Promise<MemberStats> {
   try {
-    // Fetch profile data for BMI
+    // Fetch profile data for BMI and gamification
     const profile = await prisma.profile.findUnique({
       where: { userId },
       select: {
         height: true,
         weight: true,
+        currentStreak: true,
+        longestStreak: true,
+        totalPoints: true,
       },
     });
 
@@ -149,6 +155,9 @@ export async function getMemberStats(userId: string): Promise<MemberStats> {
       sessionsThisWeek,
       weight,
       height,
+      currentStreak: profile?.currentStreak ?? 0,
+      longestStreak: profile?.longestStreak ?? 0,
+      totalPoints: profile?.totalPoints ?? 0,
     };
   } catch (error) {
     console.error("Error fetching member stats:", error);

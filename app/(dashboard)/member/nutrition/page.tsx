@@ -328,7 +328,7 @@ export default async function NutritionPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Semaine du {format(new Date(weeklyPlan.weekStartDate), "d MMMM yyyy", { locale: fr })}
               </p>
-              <NutritionPlanDisplay data={weeklyPlan.nutritionData} />
+              <NutritionPlanDisplay data={weeklyPlan.nutritionData} userId={userId} />
             </div>
           )}
 

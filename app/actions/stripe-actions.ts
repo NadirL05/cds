@@ -72,3 +72,65 @@ export async function createCheckoutSession(planName: string) {
     throw error;
   }
 }
+
+export async function createDropInCheckout(studioId: string, startTime: Date) {
+  try {
+    if (!studioId || !startTime) {
+      throw new Error("studioId et startTime sont requis pour un Drop-in");
+    }
+
+    const userId = await getUserIdOrRedirect();
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user?.email) {
+      throw new Error("Adresse email utilisateur manquante");
+    }
+
+    const customerId = await getOrCreateStripeCustomer(userId, user.email);
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
+      process.env.NEXTAUTH_URL ||
+      "http://localhost:3000";
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: "Séance EMS - Entrée Libre",
+            },
+            unit_amount: 1500, // 15€
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${baseUrl}/member/bookings?success=dropin_paid`,
+      cancel_url: `${baseUrl}/member/bookings?canceled=true`,
+      metadata: {
+        type: "DROP_IN",
+        userId,
+        studioId,
+        startTime: startTime.toISOString(),
+      },
+    });
+
+    if (!session.url) {
+      throw new Error("Échec de la création de la session Checkout Drop-in");
+    }
+
+    return session.url;
+  } catch (error) {
+    console.error("Erreur createDropInCheckout:", error);
+    throw error;
+  }
+}
+

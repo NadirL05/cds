@@ -247,7 +247,7 @@ export default async function SportsProgramPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Semaine du {format(new Date(weeklyPlan.weekStartDate), "d MMMM yyyy", { locale: fr })}
               </p>
-              <SportPlanDisplay data={weeklyPlan.sportData} />
+              <SportPlanDisplay data={weeklyPlan.sportData} userId={userId} />
             </div>
           )}
 

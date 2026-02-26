@@ -1,0 +1,8 @@
+-- AlterTable Profile: add gamification fields
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "currentStreak" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "longestStreak" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "totalPoints" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Profile" ADD COLUMN IF NOT EXISTS "lastCheckInDate" TIMESTAMP(3);
+
+-- AlterTable WeeklyPlan: add completion rate
+ALTER TABLE "WeeklyPlan" ADD COLUMN IF NOT EXISTS "completionRate" DOUBLE PRECISION NOT NULL DEFAULT 0;

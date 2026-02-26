@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Sparkles, Mail, Loader2 } from "lucide-react";
+import { Sparkles, Mail, Loader2, Zap } from "lucide-react";
 
 export default function AdminToolsPage() {
   const [isRecapLoading, setIsRecapLoading] = useState(false);
   const [isCronLoading, setIsCronLoading] = useState(false);
+  const [isYieldLoading, setIsYieldLoading] = useState(false);
 
   const triggerWeeklyRecap = async () => {
     try {
@@ -72,6 +73,36 @@ export default function AdminToolsPage() {
       toast.error("Erreur réseau lors de l'appel API.");
     } finally {
       setIsCronLoading(false);
+    }
+  };
+
+  const triggerYieldManagement = async () => {
+    try {
+      setIsYieldLoading(true);
+      toast.info("Analyse des créneaux vides...", {
+        description: "Déclenchement de l'algorithme de yield management pour demain.",
+      });
+
+      const response = await fetch("/api/admin/yield", {
+        method: "POST",
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        toast.error("Erreur lors du lancement de l'algorithme de remplissage.", {
+          description: data.error || "Une erreur est survenue côté serveur.",
+        });
+        return;
+      }
+
+      toast.success("Algorithme de yield terminé", {
+        description: `Créneaux détectés : ${data.emptySlotsFound ?? 0}, emails envoyés : ${data.emailsSent ?? 0}`,
+      });
+    } catch {
+      toast.error("Erreur réseau lors de l'appel API.");
+    } finally {
+      setIsYieldLoading(false);
     }
   };
 
@@ -180,6 +211,41 @@ export default function AdminToolsPage() {
                 comme token Bearer pour authentifier les appels.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Yield Management (Ventes Flash) */}
+        <Card className="border-orange-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-orange-500" />
+              Yield Management (Ventes Flash)
+              <Badge variant="outline" className="ml-auto border-orange-500 text-orange-500">
+                Revenue Boost
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              Analyse les créneaux vides de demain et envoie une promotion Flash aux membres 100% Digital pour maximiser les revenus.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={triggerYieldManagement}
+              disabled={isYieldLoading}
+              className="w-full bg-orange-500 hover:bg-orange-500/90"
+            >
+              {isYieldLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Algorithme en cours...
+                </>
+              ) : (
+                "Lancer l'algorithme de remplissage"
+              )}
+            </Button>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Utilise les données de réservation pour identifier les créneaux sous-performants et proposer des Drop-ins à tarif préférentiel.
+            </p>
           </CardContent>
         </Card>
       </div>

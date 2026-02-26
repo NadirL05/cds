@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   Dumbbell,
   Timer,
@@ -18,8 +19,67 @@ import {
   Zap,
   Repeat,
   MessageSquare,
+  Loader2,
+  CheckCircle,
 } from "lucide-react";
+import { toast } from "sonner";
+import confetti from "canvas-confetti";
+import { validateDailyAction } from "@/app/actions/gamification-actions";
 import type { SportDay, NutritionDay, Exercise, Meal } from "@/app/actions/plan-actions";
+
+// ==========================================
+// VALIDATE DAY BUTTON (GAMIFICATION)
+// ==========================================
+
+function ValidateDayButton({
+  userId,
+  actionType,
+}: {
+  userId: string | undefined;
+  actionType: "SPORT" | "NUTRITION";
+}) {
+  const [loading, setLoading] = useState(false);
+  const [validated, setValidated] = useState(false);
+
+  const handleValidate = async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const result = await validateDailyAction(userId, actionType);
+      if (result.success) {
+        confetti();
+        toast.success("+10 Points ! Super travail 🔥");
+        setValidated(true);
+      } else {
+        toast.error(result.error ?? "Une erreur est survenue");
+      }
+    } catch {
+      toast.error("Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!userId) return null;
+
+  return (
+    <div className="pt-4 border-t border-border/50">
+      <Button
+        onClick={handleValidate}
+        disabled={loading || validated}
+        className={validated ? "bg-green-600 hover:bg-green-600" : ""}
+        size="lg"
+      >
+        {loading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : validated ? (
+          <CheckCircle className="mr-2 h-4 w-4" />
+        ) : null}
+        {validated ? "Journée validée" : "✅ Valider ma journée"}
+      </Button>
+    </div>
+  );
+}
 
 // ==========================================
 // SPORT PLAN DISPLAY
@@ -28,6 +88,7 @@ import type { SportDay, NutritionDay, Exercise, Meal } from "@/app/actions/plan-
 interface SportPlanDisplayProps {
   data: SportDay[];
   className?: string;
+  userId?: string;
 }
 
 function ExerciseCard({ exercise, index }: { exercise: Exercise; index: number }) {
@@ -82,7 +143,13 @@ function ExerciseCard({ exercise, index }: { exercise: Exercise; index: number }
   );
 }
 
-function SportDayContent({ day }: { day: SportDay }) {
+function SportDayContent({
+  day,
+  userId,
+}: {
+  day: SportDay;
+  userId?: string;
+}) {
   return (
     <div className="space-y-4">
       {/* Day Header */}
@@ -117,11 +184,13 @@ function SportDayContent({ day }: { day: SportDay }) {
           <ExerciseCard key={index} exercise={exercise} index={index} />
         ))}
       </div>
+
+      <ValidateDayButton userId={userId} actionType="SPORT" />
     </div>
   );
 }
 
-export function SportPlanDisplay({ data, className }: SportPlanDisplayProps) {
+export function SportPlanDisplay({ data, className, userId }: SportPlanDisplayProps) {
   const [activeDay, setActiveDay] = useState("0");
   
   const dayShortNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -165,7 +234,7 @@ export function SportPlanDisplay({ data, className }: SportPlanDisplayProps) {
               value={String(index)}
               className="p-4 sm:p-6 mt-0 focus-visible:outline-none focus-visible:ring-0"
             >
-              <SportDayContent day={day} />
+              <SportDayContent day={day} userId={userId} />
             </TabsContent>
           ))}
         </Tabs>
@@ -181,6 +250,7 @@ export function SportPlanDisplay({ data, className }: SportPlanDisplayProps) {
 interface NutritionPlanDisplayProps {
   data: NutritionDay[];
   className?: string;
+  userId?: string;
 }
 
 const mealIcons = {
@@ -282,7 +352,13 @@ function MealCard({
   );
 }
 
-function NutritionDayContent({ day }: { day: NutritionDay }) {
+function NutritionDayContent({
+  day,
+  userId,
+}: {
+  day: NutritionDay;
+  userId?: string;
+}) {
   return (
     <div className="space-y-4">
       {/* Day Header */}
@@ -311,11 +387,13 @@ function NutritionDayContent({ day }: { day: NutritionDay }) {
         <MealCard meal={day.meals.snack} type="snack" />
         <MealCard meal={day.meals.dinner} type="dinner" />
       </div>
+
+      <ValidateDayButton userId={userId} actionType="NUTRITION" />
     </div>
   );
 }
 
-export function NutritionPlanDisplay({ data, className }: NutritionPlanDisplayProps) {
+export function NutritionPlanDisplay({ data, className, userId }: NutritionPlanDisplayProps) {
   const [activeDay, setActiveDay] = useState("0");
   
   const dayShortNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -355,7 +433,7 @@ export function NutritionPlanDisplay({ data, className }: NutritionPlanDisplayPr
               value={String(index)}
               className="p-4 sm:p-6 mt-0 focus-visible:outline-none focus-visible:ring-0"
             >
-              <NutritionDayContent day={day} />
+              <NutritionDayContent day={day} userId={userId} />
             </TabsContent>
           ))}
         </Tabs>
@@ -373,15 +451,16 @@ interface PlanDisplayProps {
   sportData?: SportDay[] | null;
   nutritionData?: NutritionDay[] | null;
   className?: string;
+  userId?: string;
 }
 
-export function PlanDisplay({ type, sportData, nutritionData, className }: PlanDisplayProps) {
+export function PlanDisplay({ type, sportData, nutritionData, className, userId }: PlanDisplayProps) {
   if (type === "SPORT" && sportData) {
-    return <SportPlanDisplay data={sportData} className={className} />;
+    return <SportPlanDisplay data={sportData} className={className} userId={userId} />;
   }
   
   if (type === "NUTRITION" && nutritionData) {
-    return <NutritionPlanDisplay data={nutritionData} className={className} />;
+    return <NutritionPlanDisplay data={nutritionData} className={className} userId={userId} />;
   }
   
   return (

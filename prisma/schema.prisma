@@ -27,22 +27,27 @@ model User {
 }
 
 model Profile {
-  id           String    @id @default(uuid())
-  userId       String    @unique
-  firstName    String
-  lastName     String
-  goals        String[]
-  medicalNotes String?
-  level        String?
-  height       Float?
-  weight       Float?
-  gender       String?
-  birthDate    DateTime?
-  age          Int?
-  city         String?
-  department   String?
-  phoneNumber  String?
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  firstName        String
+  lastName         String
+  goals            String[]
+  medicalNotes     String?
+  level            String?
+  height           Float?
+  weight           Float?
+  gender           String?
+  birthDate        DateTime?
+  age              Int?
+  city             String?
+  department       String?
+  phoneNumber      String?
+  // Gamification
+  currentStreak    Int       @default(0)
+  longestStreak   Int       @default(0)
+  totalPoints     Int       @default(0)
+  lastCheckInDate DateTime?
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Studio {
@@ -191,6 +196,9 @@ model WeeklyPlan {
   // JSON data for the plans
   sportData     Json?    // Workout plan: Array of { dayName, exercises: [{name, sets, reps, note}] }
   nutritionData Json?    // Meal plan: Array of { dayName, meals: {breakfast, lunch, snack, dinner} }
+  
+  // Gamification: overall completion percentage for this week
+  completionRate Float    @default(0)
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

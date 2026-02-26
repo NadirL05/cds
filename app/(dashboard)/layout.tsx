@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/user-menu";
+import { AiChatWidget } from "@/components/member/ai-chat-widget";
 import { getUserIdOrRedirect } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -148,6 +149,9 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto">
           <div className="container p-6">{children}</div>
         </main>
+
+        {/* Floating AI coach chat widget - only for members */}
+        {user?.role === "MEMBER" && <AiChatWidget />}
       </div>
     </div>
   );
