@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect";
+
 import { stripe, getOrCreateStripeCustomer } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { getUserIdOrRedirect } from "@/lib/auth-helpers";
@@ -69,7 +69,7 @@ export async function createCheckoutSession(planName: string) {
     // Redirect to Stripe Checkout
     redirect(session.url);
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if ((error as any)?.digest?.startsWith("NEXT_REDIRECT")) throw error;
     console.error("Error creating checkout session:", error);
     throw error;
   }
@@ -131,7 +131,7 @@ export async function createDropInCheckout(studioId: string, startTime: Date) {
 
     return session.url;
   } catch (error) {
-    if (isRedirectError(error)) throw error;
+    if ((error as any)?.digest?.startsWith("NEXT_REDIRECT")) throw error;
     console.error("Erreur createDropInCheckout:", error);
     throw error;
   }
