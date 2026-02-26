@@ -139,15 +139,15 @@ export async function POST(request: NextRequest) {
                 React.createElement(WelcomeEmail, {
                   firstName: firstName || undefined,
                   planName: plan,
-                }) as React.ReactElement
+                })
               );
 
               await resend.emails.send({
                 from: "onboarding@resend.dev",
                 to: userEmail,
                 subject: "Bienvenue chez CDS Sport !",
-                html: emailHtml,
-              );
+                html: emailHtml
+              });
 
               console.log(`✅ Welcome email sent to ${userEmail}`);
             } else {
