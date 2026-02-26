@@ -130,7 +130,7 @@ RÈGLES DE RÉPONSE:
       messages,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Chat API error:", error);
     return NextResponse.json(
