@@ -80,7 +80,7 @@ export function AiChatWidget() {
               </div>
             )}
 
-            {messages.map((m) => (
+            {messages.map((m: any) => (
               <div
                 key={m.id}
                 className={cn(
